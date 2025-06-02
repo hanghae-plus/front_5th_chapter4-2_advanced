@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -118,6 +118,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
+
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [page, setPage] = useState(1);
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
@@ -130,44 +131,48 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   const getFilteredLectures = () => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
-    return lectures
-      .filter(
-        (lecture) =>
-          lecture.title.toLowerCase().includes(query.toLowerCase()) ||
-          lecture.id.toLowerCase().includes(query.toLowerCase())
-      )
-      .filter(
-        (lecture) => grades.length === 0 || grades.includes(lecture.grade)
-      )
-      .filter(
-        (lecture) => majors.length === 0 || majors.includes(lecture.major)
-      )
-      .filter(
-        (lecture) => !credits || lecture.credits.startsWith(String(credits))
-      )
-      .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) => days.includes(s.day));
-      })
-      .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) =>
-          s.range.some((time) => times.includes(time))
-        );
-      });
+    return lectures.filter((lecture) => {
+      const matchesQuery =
+        lecture.title.toLowerCase().includes(query.toLowerCase()) ||
+        lecture.id.toLowerCase().includes(query.toLowerCase());
+
+      const matchesGrade =
+        grades.length === 0 || grades.includes(lecture.grade);
+
+      const matchesMajor =
+        majors.length === 0 || majors.includes(lecture.major);
+
+      const matchesCredits =
+        credits === undefined ||
+        String(lecture.credits).startsWith(String(credits));
+
+      const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
+
+      const matchesDays =
+        days.length === 0 || schedules.some((s) => days.includes(s.day));
+
+      const matchesTimes =
+        times.length === 0 ||
+        schedules.some((s) => s.range.some((time) => times.includes(time)));
+
+      return (
+        matchesQuery &&
+        matchesGrade &&
+        matchesMajor &&
+        matchesCredits &&
+        matchesDays &&
+        matchesTimes
+      );
+    });
   };
 
-  const filteredLectures = getFilteredLectures();
+  const filteredLectures = useMemo(
+    () => getFilteredLectures(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lectures, searchOptions]
+  );
+
+  console.log(filteredLectures);
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
   const allMajors = [...new Set(lectures.map((lecture) => lecture.major))];
