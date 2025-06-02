@@ -32,7 +32,7 @@ import {
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
 
 interface Props {
@@ -82,20 +82,35 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
-const fetchLiberalArts = () =>
-  axios.get<Lecture[]>("/schedules-liberal-arts.json");
+const createdCacheFetch = () => {
+  const cache = new Map();
 
-// TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
-const fetchAllLectures = async () =>
-  await Promise.all([
-    (console.log("API Call 1", performance.now()), await fetchMajors()),
-    (console.log("API Call 2", performance.now()), await fetchLiberalArts()),
-    (console.log("API Call 3", performance.now()), await fetchMajors()),
-    (console.log("API Call 4", performance.now()), await fetchLiberalArts()),
-    (console.log("API Call 5", performance.now()), await fetchMajors()),
-    (console.log("API Call 6", performance.now()), await fetchLiberalArts()),
-  ]);
+  return (url: string): Promise<AxiosResponse<Lecture[]>> => {
+    if (cache.has(url)) {
+      return cache.get(url) as Promise<AxiosResponse<Lecture[]>>;
+    }
+
+    const request = axios.get<Lecture[]>(url);
+    cache.set(url, request);
+
+    request
+      .then((response) => {
+        cache.set(url, Promise.resolve(response));
+      })
+      .catch(() => {
+        cache.delete(url);
+      });
+
+    return request;
+  };
+};
+
+const fetchLectures = createdCacheFetch();
+
+const fetchMajors = () => fetchLectures("/schedules-majors.json");
+const fetchLiberalArts = () => fetchLectures("/schedules-liberal-arts.json");
+
+const fetchAllLectures = () => Promise.all([fetchMajors(), fetchLiberalArts()]);
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -186,6 +201,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   useEffect(() => {
     const start = performance.now();
+    /** 캐시 구현 */
     console.log("API 호출 시작: ", start);
     fetchAllLectures().then((results) => {
       const end = performance.now();
