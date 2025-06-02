@@ -18,6 +18,7 @@ const ScheduleContext = createContext<ScheduleContextType | undefined>(
   undefined
 );
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useScheduleContext = () => {
   const context = useContext(ScheduleContext);
   if (context === undefined) {
@@ -27,8 +28,9 @@ export const useScheduleContext = () => {
 };
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] =
-    useState<Record<string, Schedule[]>>(dummyScheduleMap);
+  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(
+    () => dummyScheduleMap
+  );
 
   return (
     <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
