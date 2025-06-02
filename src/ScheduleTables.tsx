@@ -3,8 +3,9 @@ import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
 import SearchDialog from './SearchDialog.tsx';
 import { useState } from 'react';
+import { Lecture } from './types.ts';
 
-export const ScheduleTables = () => {
+export const ScheduleTables = ({ lectures }: { lectures: Lecture[] }) => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
   const [searchInfo, setSearchInfo] = useState<{
     tableId: string;
@@ -70,7 +71,11 @@ export const ScheduleTables = () => {
           </Stack>
         ))}
       </Flex>
-      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
+      <SearchDialog
+        lectures={lectures}
+        searchInfo={searchInfo}
+        onClose={() => setSearchInfo(null)}
+      />
     </>
   );
 };
