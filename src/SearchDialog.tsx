@@ -86,14 +86,49 @@ const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
 const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
-const fetchAllLectures = async () => await Promise.all([
-  (console.log('API Call 1', performance.now()), await fetchMajors()),
-  (console.log('API Call 2', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 3', performance.now()), await fetchMajors()),
-  (console.log('API Call 4', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 5', performance.now()), await fetchMajors()),
-  (console.log('API Call 6', performance.now()), await fetchLiberalArts()),
-]);
+// 1. Promise.all 호출 전에 함수만 전달하고 await 은 밖에서 처리
+// 2. 클로저를 활용한 캐시로 최초 1회만 호출
+const createLectureFetcher = () => {
+  let majorsPromise: Promise<{ data: Lecture[] }> | null = null;
+  let liberalArtsPromise: Promise<{ data: Lecture[] }> | null = null;
+
+  const fetchMajorsCached = () => {
+    if (!majorsPromise) {
+      console.log('API Call: fetchMajors', performance.now());
+      majorsPromise = fetchMajors();
+    }
+    return majorsPromise;
+  };
+
+  const fetchLiberalArtsCached = () => {
+    if (!liberalArtsPromise) {
+      console.log('API Call: fetchLiberalArts', performance.now());
+      liberalArtsPromise = fetchLiberalArts();
+    }
+    return liberalArtsPromise;
+  };
+
+  return async () => {
+    // 병렬 호출, 캐시 사용
+    const [majors, liberalArts] = await Promise.all([
+      fetchMajorsCached(),
+      fetchLiberalArtsCached()
+    ]);
+
+    // 필요한 만큼 재사용
+    return [
+      majors,         // Call 1
+      liberalArts,    // Call 2
+      majors,         // Call 3
+      liberalArts,    // Call 4
+      majors,         // Call 5
+      liberalArts     // Call 6
+    ];
+  };
+};
+
+const fetchAllLectures = createLectureFetcher();
+
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
