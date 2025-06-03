@@ -33,7 +33,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
-import { CreditSelector } from "./components";
+import { CreditSelector, GradeCheckbox } from "./components";
 
 interface Props {
   searchInfo: {
@@ -274,23 +274,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
             </HStack>
 
             <HStack spacing={4}>
-              <FormControl>
-                <FormLabel>학년</FormLabel>
-                <CheckboxGroup
-                  value={searchOptions.grades}
-                  onChange={(value) =>
-                    changeSearchOption("grades", value.map(Number))
-                  }
-                >
-                  <HStack spacing={4}>
-                    {[1, 2, 3, 4].map((grade) => (
-                      <Checkbox key={grade} value={grade}>
-                        {grade}학년
-                      </Checkbox>
-                    ))}
-                  </HStack>
-                </CheckboxGroup>
-              </FormControl>
+              <GradeCheckbox
+                value={searchOptions.grades}
+                onChange={(value) => changeSearchOption("grades", value)}
+              />
 
               <FormControl>
                 <FormLabel>요일</FormLabel>
