@@ -22,6 +22,7 @@ import { ComponentProps, Fragment } from "react";
 interface Props {
   tableId: string;
   schedules: Schedule[];
+  activeTableId: string | null;
   onScheduleTimeClick?: (timeInfo: { day: string, time: number }) => void;
   onDeleteButtonClick?: (timeInfo: { day: string, time: number }) => void;
 }
