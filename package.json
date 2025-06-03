@@ -1,8 +1,9 @@
 {
-  "name": "10주차-성능최적화-2-심화과제",
+  "name": "front_5th_chapter4-1_advanced",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://anveloper.github.io/front_5th_chapter4-1_advanced/",
   "scripts": {
     "dev": "vite",
     "test": "vitest",
