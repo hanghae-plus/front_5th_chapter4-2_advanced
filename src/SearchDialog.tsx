@@ -84,7 +84,15 @@ const fetchLectures = createdCacheFetch();
 const fetchMajors = () => fetchLectures("/schedules-majors.json");
 const fetchLiberalArts = () => fetchLectures("/schedules-liberal-arts.json");
 
-const fetchAllLectures = () => Promise.all([fetchMajors(), fetchLiberalArts()]);
+const fetchAllLectures = () =>
+  Promise.all([
+    (console.log("API CALL 1", performance.now()), fetchMajors()),
+    (console.log("API CALL 2", performance.now()), fetchLiberalArts()),
+    (console.log("API CALL 3", performance.now()), fetchMajors()),
+    (console.log("API CALL 4", performance.now()), fetchLiberalArts()),
+    (console.log("API CALL 5", performance.now()), fetchMajors()),
+    (console.log("API CALL 6", performance.now()), fetchLiberalArts()),
+  ]);
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {

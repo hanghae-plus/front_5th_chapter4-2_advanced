@@ -5,7 +5,6 @@ import { memo } from "react";
 import { FixedSizeList as MajorsList } from "react-window";
 
 function ScheduleMemoizedMajors({ majors }: { majors: string[] }) {
-  console.log("전공 렌더링");
   return (
     <Stack
       spacing={2}
