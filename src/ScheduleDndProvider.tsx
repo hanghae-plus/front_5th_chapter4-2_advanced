@@ -1,7 +1,15 @@
-import { DndContext, Modifier, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+  DndContext,
+  Modifier,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent, 
+} from "@dnd-kit/core";
 import { PropsWithChildren } from "react";
-import { CellSize, DAY_LABELS } from "./constants.ts";
-import { useScheduleContext } from "./ScheduleContext.tsx";
+import { CellSize, DAY_LABELS } from "./constants";
+import { useSchedulesData, useScheduleActions } from "./ScheduleContext"; 
+import { Schedule } from "./types"; 
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {
@@ -26,10 +34,12 @@ function createSnapModifier(): Modifier {
   };
 }
 
-const modifiers = [createSnapModifier()]
+const modifiers = [createSnapModifier()];
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
-  const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const schedulesMap = useSchedulesData();
+  const { updateScheduleList } = useScheduleActions();
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -38,29 +48,59 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
     })
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, delta } = event;
-    const { x, y } = delta;
-    const [tableId, index] = active.id.split(':');
-    const schedule = schedulesMap[tableId][index];
-    const nowDayIndex = DAY_LABELS.indexOf(schedule.day as typeof DAY_LABELS[number])
-    const moveDayIndex = Math.floor(x / 80);
-    const moveTimeIndex = Math.floor(y / 30);
 
-    setSchedulesMap({
-      ...schedulesMap,
-      [tableId]: schedulesMap[tableId].map((targetSchedule, targetIndex) => {
-        if (targetIndex !== Number(index)) {
-          return { ...targetSchedule }
-        }
+    if (!active || (delta.x === 0 && delta.y === 0)) return;
+    
+    const activeId = String(active.id);
+    const [tableId, scheduleIndexStr] = activeId.split(':');
+    const scheduleIndex = Number(scheduleIndexStr);
+
+    if (!tableId || isNaN(scheduleIndex)) {
+      console.error("Invalid active.id format:", active.id);
+      return;
+    }
+
+    const currentTableList = schedulesMap[tableId];
+    if (!currentTableList || scheduleIndex < 0 || scheduleIndex >= currentTableList.length) {
+      console.error(
+        "Schedule not found for dragging. Active ID:", active.id,
+        "Parsed TableID:", tableId, "Parsed Index:", scheduleIndex
+      );
+      return;
+    }
+    
+    const scheduleToUpdate: Schedule = currentTableList[scheduleIndex];
+
+    const { x, y } = delta;
+    const nowDayIndex = DAY_LABELS.indexOf(scheduleToUpdate.day as typeof DAY_LABELS[number]);
+
+    if (nowDayIndex === -1) {
+        console.error("Current day of the schedule is not in DAY_LABELS:", scheduleToUpdate.day);
+        return;
+    }
+
+    let newDayIndex = nowDayIndex + Math.floor(x / CellSize.WIDTH);
+    newDayIndex = Math.max(0, Math.min(newDayIndex, DAY_LABELS.length - 1));
+    const newDay = DAY_LABELS[newDayIndex];
+
+    const moveTimeIndex = Math.floor(y / CellSize.HEIGHT);
+    const newRange = scheduleToUpdate.range.map(time => {
+      const newTime = time + moveTimeIndex;
+      return Math.max(1, Math.min(newTime, 24));
+    });
+    const newTableList = currentTableList.map((targetSchedule, targetIndex) => {
+      if (targetIndex === scheduleIndex) {
         return {
           ...targetSchedule,
-          day: DAY_LABELS[nowDayIndex + moveDayIndex],
-          range: targetSchedule.range.map(time => time + moveTimeIndex),
-        }
-      })
-    })
+          day: newDay,
+          range: newRange,
+        };
+      }
+      return targetSchedule;
+    });
+    updateScheduleList(tableId, newTableList);
   };
 
   return (

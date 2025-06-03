@@ -17,13 +17,13 @@ import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
 import { useDndContext, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment } from "react";
+import React, { ComponentProps, Fragment, useCallback, useMemo, memo } from "react";
 
-interface Props {
+interface ScheduleTableProps {
   tableId: string;
   schedules: Schedule[];
-  onScheduleTimeClick?: (timeInfo: { day: string, time: number }) => void;
-  onDeleteButtonClick?: (timeInfo: { day: string, time: number }) => void;
+  onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
+  onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
 }
 
 const TIMES = [
@@ -38,25 +38,17 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
-const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-
-  const getColor = (lectureId: string): string => {
-    const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-    const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-    return colors[lectures.indexOf(lectureId) % colors.length];
-  };
-
+/**
+ * TableOutlineWrapper 컴포넌트
+ * 현재 활성화된 테이블에 외곽선을 표시하는 역할을 합니다.
+ * useDndContext 훅을 사용하여 현재 드래그 앤 드롭 컨텍스트의 active 정보를 가져오고,
+ * active 테이블의 ID와 비교하여 외곽선을 표시합니다.
+ * React.memo를 사용해 tableId나 children이 변경될 때만 리렌더링합니다.
+ */
+const TableOutlineWrapper = memo(({ tableId, children }: { tableId: string; children: React.ReactNode }) => {
   const dndContext = useDndContext();
-
-  const getActiveTableId = () => {
-    const activeId = dndContext.active?.id;
-    if (activeId) {
-      return String(activeId).split(":")[0];
-    }
-    return null;
-  }
-
-  const activeTableId = getActiveTableId();
+  const activeId = dndContext.active?.id;
+  const activeTableId = activeId ? String(activeId).split(":")[0] : null;
 
   return (
     <Box
@@ -64,6 +56,54 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
       outline={activeTableId === tableId ? "5px dashed" : undefined}
       outlineColor="blue.300"
     >
+      {children}
+    </Box>
+  );
+});
+TableOutlineWrapper.displayName = "TableOutlineWrapper";
+
+
+/**
+ * ScheduleTable 컴포넌트
+ * - 강의 시간표를 표시하는 컴포넌트입니다.
+ * - 각 시간대와 요일에 맞춰 강의 정보를 그리드 형태로 렌더링합니다.
+ * - props (tableId, schedules 등)가 변경되지 않았을 때 불필요한 리렌더링을 방지하기 위해 React.memo로 감쌌습니다.
+ * 
+ * */ 
+const ScheduleTable = memo(({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: ScheduleTableProps) => {
+  const lecturesForColor = useMemo(() => {
+    return [...new Set(schedules.map(({ lecture }) => lecture.id))];
+  }, [schedules]);
+
+  const getColor = useCallback(
+    (lectureId: string): string => {
+      const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
+      if (lecturesForColor.length === 0) return colors[0];
+      const index = lecturesForColor.indexOf(lectureId);
+      return colors[index % colors.length];
+    },
+    [lecturesForColor]
+  );
+
+  const handleScheduleTimeClick = useCallback(
+    (day: string, time: number) => {
+      onScheduleTimeClick?.({ day, time });
+    },
+    [onScheduleTimeClick]
+  );
+
+  const handleScheduleDelete = useCallback(
+    (schedule: Schedule) => {
+      onDeleteButtonClick?.({
+        day: schedule.day,
+        time: schedule.range[0],
+      });
+    },
+    [onDeleteButtonClick]
+  );
+
+  return (
+    <TableOutlineWrapper tableId={tableId}>
       <Grid
         templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
         templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
@@ -104,7 +144,7 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
                 bg={timeIndex > 17 ? 'gray.100' : 'white'}
                 cursor="pointer"
                 _hover={{ bg: 'yellow.100' }}
-                onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
+                onClick={() => handleScheduleTimeClick(day, timeIndex + 1)}
               />
             ))}
           </Fragment>
@@ -117,64 +157,81 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
           id={`${tableId}:${index}`}
           data={schedule}
           bg={getColor(schedule.lecture.id)}
-          onDeleteButtonClick={() => onDeleteButtonClick?.({
-            day: schedule.day,
-            time: schedule.range[0],
-          })}
+          requestDelete={handleScheduleDelete}
         />
       ))}
-    </Box>
+    </TableOutlineWrapper>
   );
-};
+});
+ScheduleTable.displayName = "ScheduleTable";
 
-const DraggableSchedule = ({
- id,
- data,
- bg,
- onDeleteButtonClick
-}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
-  onDeleteButtonClick: () => void
-}) => {
+
+interface DraggableScheduleProps extends ComponentProps<'div'> {
+  id: string;
+  data: Schedule;
+  requestDelete: (schedule: Schedule) => void;
+  bg: string;
+}
+
+/**
+ * DraggableSchedule 컴포넌트
+ * - 드래그 가능한 강의 시간표 아이템을 렌더링합니다.
+ * props가 변경되지 않았을 때 불필요한 리렌더링을 방지하기 위해 React.memo로 감쌌습니다.
+ * ScheduleTable로부터 메모이제이션된 콜백 함수인 requestDelete prop을 받아, 강의를 삭제하는 기능을 제공합니다.
+ * 
+ * */ 
+const DraggableSchedule = memo(({ id, data, bg, requestDelete, ...restOfBoxProps }: DraggableScheduleProps) => {
   const { day, range, room, lecture } = data;
-  const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
-  const leftIndex = DAY_LABELS.indexOf(day as typeof DAY_LABELS[number]);
+  const { attributes, setNodeRef, listeners, transform, isDragging } = useDraggable({ id });
+  const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
   const topIndex = range[0] - 1;
   const size = range.length;
+
+  const style = {
+    position: "absolute" as const,
+    left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
+    top: `${40 + topIndex * CellSize.HEIGHT + 1}px`,
+    width: `${CellSize.WIDTH - 1}px`,
+    height: `${CellSize.HEIGHT * size - 1}px`,
+    backgroundColor: bg,
+    padding: "4px",
+    boxSizing: "border-box" as const,
+    cursor: isDragging ? "grabbing" : "grab",
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 100 : 1,
+  };
+
+  const handleDeleteClick = useCallback(() => {
+    requestDelete(data);
+  }, [requestDelete, data]);
 
   return (
     <Popover>
       <PopoverTrigger>
         <Box
-          position="absolute"
-          left={`${120 + (CellSize.WIDTH * leftIndex) + 1}px`}
-          top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-          width={(CellSize.WIDTH - 1) + "px"}
-          height={(CellSize.HEIGHT * size - 1) + "px"}
-          bg={bg}
-          p={1}
-          boxSizing="border-box"
-          cursor="pointer"
           ref={setNodeRef}
-          transform={CSS.Translate.toString(transform)}
+          style={style}
           {...listeners}
           {...attributes}
+          {...restOfBoxProps}
         >
           <Text fontSize="sm" fontWeight="bold">{lecture.title}</Text>
           <Text fontSize="xs">{room}</Text>
         </Box>
       </PopoverTrigger>
       <PopoverContent onClick={event => event.stopPropagation()}>
-        <PopoverArrow/>
-        <PopoverCloseButton/>
+        <PopoverArrow />
+        <PopoverCloseButton />
         <PopoverBody>
-          <Text>강의를 삭제하시겠습니까?</Text>
-          <Button colorScheme="red" size="xs" onClick={onDeleteButtonClick}>
+        <Text>강의를 삭제하시겠습니까?</Text>
+          <Button colorScheme="red" size="xs" onClick={handleDeleteClick} >
             삭제
           </Button>
         </PopoverBody>
       </PopoverContent>
     </Popover>
   );
-}
+});
+DraggableSchedule.displayName = "DraggableSchedule";
 
 export default ScheduleTable;
