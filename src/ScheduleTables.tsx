@@ -1,8 +1,9 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleTable from "./ScheduleTable.tsx";
 import { useScheduleContext } from "./ScheduleContext.tsx";
-import SearchDialog from "./SearchDialog.tsx";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+
+const SearchDialog = lazy(() => import("./SearchDialog.tsx"));
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
@@ -81,10 +82,12 @@ export const ScheduleTables = () => {
         ))}
       </Flex>
       {searchInfo && (
-        <SearchDialog
-          searchInfo={searchInfo}
-          onClose={() => setSearchInfo(null)}
-        />
+        <Suspense fallback={<div>...loading</div>}>
+          <SearchDialog
+            searchInfo={searchInfo}
+            onClose={() => setSearchInfo(null)}
+          />
+        </Suspense>
       )}
     </>
   );
