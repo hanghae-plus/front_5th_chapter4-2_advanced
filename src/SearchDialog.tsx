@@ -2,10 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   HStack,
-  Input,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -264,25 +261,21 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 value={searchOptions.query}
                 onChange={handleQueryChange}
               />
-
               <CreditSelector
                 value={searchOptions.credits}
                 onChange={handleCreditChange}
               />
             </HStack>
-
             <HStack spacing={4}>
               <GradeCheckbox
                 value={searchOptions.grades}
                 onChange={handleGradeChange}
               />
-
               <DayCheckbox
                 value={searchOptions.days}
                 onChange={handleDayChange}
               />
             </HStack>
-
             <HStack spacing={4}>
               <TimeCheckbox
                 times={searchOptions.times}
