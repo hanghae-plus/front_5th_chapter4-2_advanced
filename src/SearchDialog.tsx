@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -35,6 +35,7 @@ import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
 import { createCachedFetcher } from "./utils/index.ts";
+import MajorFilter from "./MajorFilter.tsx";
 
 interface Props {
   searchInfo: {
@@ -300,7 +301,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     ))}
                   </Wrap>
                   <Stack spacing={2} overflowY="auto" h="100px" border="1px solid" borderColor="gray.200"
-                         borderRadius={5} p={2}>
+                        borderRadius={5} p={2}>
                     {TIME_SLOTS.map(({ id, label }) => (
                       <Box key={id}>
                         <Checkbox key={id} size="sm" value={id}>
@@ -312,34 +313,13 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 </CheckboxGroup>
               </FormControl>
 
-              <FormControl>
-                <FormLabel>전공</FormLabel>
-                <CheckboxGroup
-                  colorScheme="green"
-                  value={searchOptions.majors}
-                  onChange={(values) => changeSearchOption('majors', values as string[])}
-                >
-                  <Wrap spacing={1} mb={2}>
-                    {searchOptions.majors.map(major => (
-                      <Tag key={major} size="sm" variant="outline" colorScheme="blue">
-                        <TagLabel>{major.split("<p>").pop()}</TagLabel>
-                        <TagCloseButton
-                          onClick={() => changeSearchOption('majors', searchOptions.majors.filter(v => v !== major))}/>
-                      </Tag>
-                    ))}
-                  </Wrap>
-                  <Stack spacing={2} overflowY="auto" h="100px" border="1px solid" borderColor="gray.200"
-                         borderRadius={5} p={2}>
-                    {allMajors.map(major => (
-                      <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
-                          {major.replace(/<p>/gi, ' ')}
-                        </Checkbox>
-                      </Box>
-                    ))}
-                  </Stack>
-                </CheckboxGroup>
-              </FormControl>
+              <MajorFilter
+                allMajors={allMajors}
+                selectedMajors={searchOptions.majors}
+                onChangeMajors={(majors) =>
+                  changeSearchOption("majors", majors)
+                }
+              />
             </HStack>
             <Text align="right">
               검색결과: {filteredLectures.length}개
