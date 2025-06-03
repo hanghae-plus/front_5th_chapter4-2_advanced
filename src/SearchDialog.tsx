@@ -86,15 +86,36 @@ const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
 const fetchLiberalArts = () =>
   axios.get<Lecture[]>("/schedules-liberal-arts.json");
 
-// NOTE: 각 fetch 부분의 await을 제거하여 병렬적으로 호출될 수 있도록 함
+const createFetcherWithCache = () => {
+  const cache = new Map();
+
+  return (fetchFn: () => unknown, key: string) => {
+    if (cache.has(key)) {
+      return cache.get(key); // 캐시에서 가져옴
+    }
+
+    const fetchPromise = fetchFn(); // 캐시에 없으면 호툴
+    cache.set(key, fetchPromise); // 캐시에 저장
+    return fetchPromise;
+  };
+};
+
+const fetcherWithCache = createFetcherWithCache();
+
 const fetchAllLectures = async () =>
   await Promise.all([
-    (console.log("API Call 1", performance.now()), fetchMajors()),
-    (console.log("API Call 2", performance.now()), fetchLiberalArts()),
-    (console.log("API Call 3", performance.now()), fetchMajors()),
-    (console.log("API Call 4", performance.now()), fetchLiberalArts()),
-    (console.log("API Call 5", performance.now()), fetchMajors()),
-    (console.log("API Call 6", performance.now()), fetchLiberalArts()),
+    (console.log("API Call 1", performance.now()),
+    fetcherWithCache(fetchMajors, "majors")),
+    (console.log("API Call 2", performance.now()),
+    fetcherWithCache(fetchLiberalArts, "liberal-arts")),
+    (console.log("API Call 3", performance.now()),
+    fetcherWithCache(fetchMajors, "majors")),
+    (console.log("API Call 4", performance.now()),
+    fetcherWithCache(fetchLiberalArts, "liberal-arts")),
+    (console.log("API Call 5", performance.now()),
+    fetcherWithCache(fetchMajors, "majors")),
+    (console.log("API Call 6", performance.now()),
+    fetcherWithCache(fetchLiberalArts, "liberal-arts")),
   ]);
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
