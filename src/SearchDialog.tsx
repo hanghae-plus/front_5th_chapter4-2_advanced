@@ -28,6 +28,7 @@ import SearchGradesControl from './search/SearchGradesControl.tsx';
 import SearchDaysControl from './search/SearchDaysControl.tsx';
 import SearchTimesControl from './search/SearchTimesControl.tsx';
 import SearchMajorsControl from './search/SearchMajorsControl.tsx';
+
 interface Props {
   searchInfo: {
     tableId: string;
@@ -107,7 +108,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const filteredLectures = useMemo(() => {
+    if (lectures.length === 0) {
+      return [];
+    }
+
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(
@@ -132,9 +137,8 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some((s) => s.range.some((time) => times.includes(time)));
       });
-  };
+  }, [searchOptions, lectures]);
 
-  const filteredLectures = getFilteredLectures();
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
   const allMajors = useMemo(
