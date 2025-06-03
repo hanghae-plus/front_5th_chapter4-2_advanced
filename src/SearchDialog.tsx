@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Box,
-  Button,
   HStack,
   Modal,
   ModalBody,
@@ -11,7 +10,6 @@ import {
   ModalOverlay,
   Table,
   Tbody,
-  Td,
   Text,
   Th,
   Thead,
@@ -28,6 +26,7 @@ import SearchGradesControl from './search/SearchGradesControl.tsx';
 import SearchDaysControl from './search/SearchDaysControl.tsx';
 import SearchTimesControl from './search/SearchTimesControl.tsx';
 import SearchMajorsControl from './search/SearchMajorsControl.tsx';
+import LectureList from './LectureList';
 
 interface Props {
   searchInfo: {
@@ -140,7 +139,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   }, [searchOptions, lectures]);
 
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
+  const visibleLectures = useMemo(
+    () => filteredLectures.slice(0, page * PAGE_SIZE),
+    [filteredLectures, page]
+  );
   const allMajors = useMemo(
     () => [...new Set(lectures.map((lecture) => lecture.major))],
     [lectures]
@@ -154,23 +156,22 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     []
   );
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
-
-    const { tableId } = searchInfo;
-
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
-
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
-
-    onClose();
-  };
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
+      const { tableId } = searchInfo;
+      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+        ...schedule,
+        lecture,
+      }));
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
+      onClose();
+    },
+    [searchInfo, setSchedulesMap, onClose]
+  );
 
   useEffect(() => {
     const start = performance.now();
@@ -312,25 +313,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
                 <Table size="sm" variant="striped">
                   <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }} />
-                        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.schedule }} />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture)}
-                          >
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
-                    ))}
+                    <LectureList lectures={visibleLectures} onAdd={addSchedule} />
                   </Tbody>
                 </Table>
                 <Box ref={loaderRef} h="20px" />
