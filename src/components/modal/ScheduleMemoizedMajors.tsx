@@ -5,6 +5,7 @@ import { memo } from "react";
 import { FixedSizeList as MajorsList } from "react-window"; // ✅ 정답
 
 function ScheduleMemoizedMajors({ majors }: { majors: string[] }) {
+  console.log("전공 렌더링");
   return (
     <Stack
       spacing={2}
@@ -26,7 +27,7 @@ function ScheduleMemoizedMajors({ majors }: { majors: string[] }) {
           return (
             <Box style={style} key={index}>
               <Checkbox key={major} size="sm" value={major}>
-                {major}
+                {major.replace(/<p>/gi, " ")}
               </Checkbox>
             </Box>
           );
