@@ -14,7 +14,6 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Select,
   Stack,
   Table,
   Tag,
@@ -34,6 +33,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
+import { CreditSelector } from "./components";
 
 interface Props {
   searchInfo: {
@@ -127,8 +127,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  // lectures 또는 searchOptions가 바뀔 때만 re-compute
+  // lectures 또는 searchOptions가 바뀔 때만 연산
   const filteredLectures = useMemo(() => {
+    console.log("filteredLectures 호출", { page });
     const { query = "", credits, grades, days, times, majors } = searchOptions;
 
     return lectures
@@ -266,20 +267,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 />
               </FormControl>
 
-              <FormControl>
-                <FormLabel>학점</FormLabel>
-                <Select
-                  value={searchOptions.credits}
-                  onChange={(e) =>
-                    changeSearchOption("credits", e.target.value)
-                  }
-                >
-                  <option value="">전체</option>
-                  <option value="1">1학점</option>
-                  <option value="2">2학점</option>
-                  <option value="3">3학점</option>
-                </Select>
-              </FormControl>
+              <CreditSelector
+                value={searchOptions.credits}
+                onChange={(value) => changeSearchOption("credits", value)}
+              />
             </HStack>
 
             <HStack spacing={4}>
