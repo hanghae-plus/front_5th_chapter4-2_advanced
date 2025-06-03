@@ -1,9 +1,9 @@
 {
-  "name": "front_5th_chapter4-1_advanced",
+  "name": "front_5th_chapter4-2_advanced",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://anveloper.github.io/front_5th_chapter4-1_advanced/",
+  "homepage": "https://anveloper.github.io/front_5th_chapter4-2_advanced/",
   "scripts": {
     "dev": "vite",
     "test": "vitest",
