@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
-  Button,
   HStack,
   Modal,
   ModalBody,
@@ -9,13 +8,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   VStack,
 } from "@chakra-ui/react";
 import { useScheduleContext } from "./ScheduleContext.tsx";
