@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -127,8 +127,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  // lectures 또는 searchOptions가 바뀔 때만 re-compute
+  const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
+
     return lectures
       .filter(
         (lecture) =>
@@ -145,18 +147,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         (lecture) => !credits || lecture.credits.startsWith(String(credits))
       )
       .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
+        if (days.length === 0) return true;
         const schedules = lecture.schedule
           ? parseSchedule(lecture.schedule)
           : [];
         return schedules.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
+        if (times.length === 0) return true;
         const schedules = lecture.schedule
           ? parseSchedule(lecture.schedule)
           : [];
@@ -164,12 +162,22 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
           s.range.some((time) => times.includes(time))
         );
       });
-  };
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map((lecture) => lecture.major))];
+  const lastPage = useMemo(
+    () => Math.ceil(filteredLectures.length / PAGE_SIZE),
+    [filteredLectures.length]
+  );
+
+  const visibleLectures = useMemo(
+    () => filteredLectures.slice(0, page * PAGE_SIZE),
+    [filteredLectures, page]
+  );
+
+  const allMajors = useMemo(
+    () => [...new Set(lectures.map((lecture) => lecture.major))],
+    [lectures]
+  );
 
   const changeSearchOption = (
     field: keyof SearchOption,
