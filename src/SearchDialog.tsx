@@ -359,7 +359,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                   >
                     {TIME_SLOTS.map(({ id, label }) => (
                       <Box key={id}>
-                        <Checkbox key={id} size="sm" value={id}>
+                        <Checkbox size="sm" value={id}>
                           {id}교시({label})
                         </Checkbox>
                       </Box>
@@ -408,7 +408,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                   >
                     {allMajors.map((major) => (
                       <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
+                        <Checkbox size="sm" value={major}>
                           {major.replace(/<p>/gi, " ")}
                         </Checkbox>
                       </Box>
