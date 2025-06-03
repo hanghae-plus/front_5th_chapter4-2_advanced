@@ -1,7 +1,7 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { useCallback, useMemo, useState } from "react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
+import { LocalScheduleProvider, useScheduleContext } from "./ScheduleContext.tsx";
 import ScheduleTable from "./ScheduleTable.tsx";
 import SearchDialog from "./SearchDialog.tsx";
 
@@ -78,14 +78,14 @@ export const ScheduleTables = () => {
                 </Button>
               </ButtonGroup>
             </Flex>
-            <ScheduleTable
-              key={`schedule-table-${index}`}
-              schedules={schedules}
+            <LocalScheduleProvider
               tableId={tableId}
+              schedules={schedules}
               onScheduleTimeClick={(timeInfo) => handleScheduleTimeClick(tableId, timeInfo)}
               onDeleteButtonClick={(timeInfo) => handleDeleteButtonClick(tableId, timeInfo)}
-              isActive={tableId === activeTableId}
-            />
+            >
+              <ScheduleTable key={`schedule-table-${index}`} isActive={tableId === activeTableId} />
+            </LocalScheduleProvider>
           </Stack>
         ))}
       </Flex>

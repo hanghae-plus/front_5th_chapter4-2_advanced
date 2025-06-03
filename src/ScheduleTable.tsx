@@ -2,31 +2,14 @@ import { Box, Button, Flex, Grid, GridItem, Popover, PopoverArrow, PopoverBody, 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment, memo, useMemo } from "react";
-import { CellSize, DAY_LABELS, 분 } from "./constants.ts";
+import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "./constants.ts";
+import { useLocalScheduleContext } from "./ScheduleContext.tsx";
 import { Schedule } from "./types.ts";
-import { fill2, parseHnM } from "./utils.ts";
+import { fill2 } from "./utils.ts";
 
-interface Props {
-  tableId: string;
-  schedules: Schedule[];
-  onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
-  onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
-  isActive: boolean;
-}
-
-const TIMES = [
-  ...Array(18)
-    .fill(0)
-    .map((v, k) => v + k * 30 * 분)
-    .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
-
-  ...Array(6)
-    .fill(18 * 30 * 분)
-    .map((v, k) => v + k * 55 * 분)
-    .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
-] as const;
-
-const ScheduleTable = memo(({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick, isActive = false }: Props) => {
+// ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
+const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
+  const { tableId, schedules, onScheduleTimeClick, onDeleteButtonClick } = useLocalScheduleContext();
   const colorMap = useMemo(() => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
@@ -62,7 +45,7 @@ const ScheduleTableGrid = memo(({ onScheduleTimeClick }: ScheduleTableGridProps)
   return (
     <Grid
       templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
-      templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
+      templateRows={`40px repeat(${SCHEDULE_TIMES.length}, ${CellSize.HEIGHT}px)`}
       bg="white"
       fontSize="sm"
       textAlign="center"
@@ -81,7 +64,7 @@ const ScheduleTableGrid = memo(({ onScheduleTimeClick }: ScheduleTableGridProps)
           </Flex>
         </GridItem>
       ))}
-      {TIMES.map((time, timeIndex) => (
+      {SCHEDULE_TIMES.map((time, timeIndex) => (
         <Fragment key={`시간-${timeIndex + 1}`}>
           <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
             <Flex justifyContent="center" alignItems="center" h="full">
