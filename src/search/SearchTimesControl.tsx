@@ -47,10 +47,13 @@ interface SearchTimesControlProps {
 
 const SearchTimesControl = memo(
   ({ times, onChange, changeSearchOption }: SearchTimesControlProps) => {
+    const handleChange = (values: number[]) => {
+      onChange(values.map(Number));
+    };
     return (
       <FormControl>
         <FormLabel>시간</FormLabel>
-        <CheckboxGroup colorScheme="green" value={times} onChange={onChange}>
+        <CheckboxGroup colorScheme="green" value={times} onChange={handleChange}>
           <Wrap spacing={1} mb={2}>
             {times
               ?.sort((a, b) => a - b)
