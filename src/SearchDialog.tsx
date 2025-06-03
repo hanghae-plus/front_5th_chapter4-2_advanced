@@ -124,8 +124,8 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
     query: "",
     grades: [],
-    days: [],
-    times: [],
+    days: searchInfo?.day ? [searchInfo.day] : [],
+    times: searchInfo?.time ? [searchInfo.time] : [],
     majors: [],
   });
 
@@ -237,15 +237,6 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
     return () => observer.unobserve($loader);
   }, [lastPage]);
-
-  useEffect(() => {
-    setSearchOptions((prev) => ({
-      ...prev,
-      days: searchInfo?.day ? [searchInfo.day] : [],
-      times: searchInfo?.time ? [searchInfo.time] : [],
-    }));
-    setPage(1);
-  }, [searchInfo]);
 
   return (
     <Modal isOpen={Boolean(searchInfo)} onClose={onClose} size="6xl">
