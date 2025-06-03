@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy static site
 
 on:
   push:
@@ -6,15 +6,19 @@ on:
       - main
     paths-ignore:
       - "**/*.md"
-  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,18 +26,18 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: true
+      - name: Install dependencies
+        run: pnpm install
 
-      - name: Build
+      - name: Build site
         run: pnpm run build
+
+      - name: Copy CNAME
+        run: |
+          echo 'anveloper.dev' > dist/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          cname: anveloper.dev

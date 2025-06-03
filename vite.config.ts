@@ -5,6 +5,7 @@ import { defineConfig as defineTestConfig, mergeConfig } from "vitest/config";
 export default mergeConfig(
   defineConfig({
     plugins: [react()],
+    base: "/front_5th_chapter4-1_advanced/",
   }),
   defineTestConfig({
     test: {
