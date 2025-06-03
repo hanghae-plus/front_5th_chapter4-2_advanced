@@ -34,6 +34,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
+import { createCachedFetcher } from "./utils/index.ts";
 
 interface Props {
   searchInfo: {
@@ -82,16 +83,18 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
-const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
+const fetchMajors = createCachedFetcher<Lecture[]>(() =>
+  axios.get<Lecture[]>('/schedules-majors.json')
+);
 
-const fetchAllLectures = async () => {
-  const [majors, liberalArts] = await Promise.all([
-    fetchMajors(),
-    fetchLiberalArts(),
-  ]);
-  return [majors, liberalArts];
+const fetchLiberalArts = createCachedFetcher<Lecture[]>(() =>
+  axios.get<Lecture[]>('/schedules-liberal-arts.json')
+);
+
+const fetchAllLectures = async (): Promise<[Lecture[], Lecture[]]> => {
+  return Promise.all([fetchMajors(), fetchLiberalArts()]);
 };
+
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -166,13 +169,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   useEffect(() => {
     const start = performance.now();
-    console.log('API 호출 시작: ', start)
-    fetchAllLectures().then(results => {
-      const end = performance.now();
-      console.log('모든 API 호출 완료 ', end)
-      console.log('API 호출에 걸린 시간(ms): ', end - start)
-      setLectures(results.flatMap(result => result.data));
-    })
+    console.log('API 호출 시작:', start);
+  
+    fetchAllLectures()
+      .then(results => {
+        const end = performance.now();
+        console.log('모든 API 호출 완료:', end);
+        console.log('API 호출에 걸린 시간(ms):', end - start);
+
+        setLectures(results.flat());
+      })
+      .catch(err => {
+        console.error('API 호출 중 에러:', err);
+      });
   }, []);
 
   useEffect(() => {
