@@ -18,6 +18,7 @@
 ### API 호출 최적화
 
 - API 호출 최적화 전 속도
+ 
   ![Screenshot 2025-06-03 at 16 54 52](https://github.com/user-attachments/assets/af75e867-4ef2-4198-a03c-7e5624cc4741)
 
 <details><summary><strong>axios.ts</strong> 👈🏻</summary>
@@ -86,7 +87,9 @@ api.interceptors.response.use((response) => {
 </details>
 
 - `axios instance` 에서 메모리 캐싱 전략 사용 후 속도
+ 
   ![Screenshot 2025-06-03 at 16 55 52](https://github.com/user-attachments/assets/1b61c189-bbe4-40e8-932b-6cc7c9cf4202)
+
   - 배포를 위한 `baseURL` 설정하다가, 올바른 `Promise.all` 사용법 개선 보다 먼저 캐싱을 구현
   - `Record<string, AxiosResponse<unknown>>`로 간단하게 메모리 캐싱 구현
   - 추가적으로 `axios.interceptors`를 이용해 만료시간을 포함한 캐싱전략을 구현하였으나, `interceptor` 수준의 데이터는 서버에서 캐싱하는 것이 아닐까 하여 적용하지 않음
@@ -116,7 +119,9 @@ const fetchAllLectures = () => {
 </details>
 
 - 올바른 `Promise.all` 사용 방법 적용
+ 
   ![Screenshot 2025-06-03 at 18 00 51](https://github.com/user-attachments/assets/c17f440d-ea41-45e8-8d37-5486a0a3efcb)
+
   - `Promise.all`의 배열 내에서 `await`로 기다리지 않고 모든 함수를 호출, `Promise.all`에서 한번에 비동기 대기 후 처리
   - `Promise.all`은  `Promise`를 반환하며, `async`도 `Promise`를 반환하는 `systactic sugar` 이기때문에 `async, await` 제거
   - 앞선 함수를 기다리지 않고 다음 함수를 바로 요청하기 때문에 호출 시간이 동일하고 호출에 걸린 시간이 감소
