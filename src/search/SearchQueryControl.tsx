@@ -8,7 +8,6 @@ interface SearchQueryControlProps {
   onChange: (query: string) => void;
 }
 const SearchQueryControl = memo(({ query, onChange }: SearchQueryControlProps) => {
-  console.log('render');
   return (
     <FormControl>
       <FormLabel>검색어</FormLabel>

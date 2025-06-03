@@ -7,10 +7,13 @@ interface SearchGradesControlProps {
 }
 
 const SearchGradesControl = memo(({ grades, onChange }: SearchGradesControlProps) => {
+  const handleChange = (values: number[]) => {
+    onChange(values.map(Number));
+  };
   return (
     <FormControl>
       <FormLabel>학년</FormLabel>
-      <CheckboxGroup value={grades} onChange={onChange}>
+      <CheckboxGroup value={grades} onChange={handleChange}>
         <HStack spacing={4}>
           {[1, 2, 3, 4].map((grade) => (
             <Checkbox key={grade} value={grade}>
