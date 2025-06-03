@@ -27,14 +27,14 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
-import { parseSchedule } from "./utils.ts";
+import { useSchedulesData, useScheduleActions } from "./ScheduleContext";
+import { Lecture, Schedule } from "./types";
+import { parseSchedule } from "./utils";
 import axios from "axios";
-import { DAY_LABELS } from "./constants.ts";
-import { createCachedFetcher } from "./utils/index.ts";
-import MajorFilter from "./MajorFilter.tsx";
-import LectureRow from "./LectureRow.tsx";
+import { DAY_LABELS } from "./constants";
+import { createCachedFetcher } from "./utils/index";
+import MajorFilter from "./MajorFilter";
+import LectureRow from "./LectureRow";
 
 interface Props {
   searchInfo: {
@@ -91,14 +91,15 @@ const fetchLiberalArts = createCachedFetcher<Lecture[]>(() =>
   axios.get<Lecture[]>('/schedules-liberal-arts.json')
 );
 
-const fetchAllLectures = async (): Promise<[Lecture[], Lecture[]]> => {
-  return Promise.all([fetchMajors(), fetchLiberalArts()]);
+const fetchAllLectures = async (): Promise<Lecture[]> => {
+  const results = await Promise.all([fetchMajors(), fetchLiberalArts()]);
+  return results.flat();
 };
 
 
-// TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const { setSchedulesMap } = useScheduleContext();
+  const schedulesMap = useSchedulesData();
+  const { updateScheduleList } = useScheduleActions();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -110,6 +111,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     days: [],
     times: [],
     majors: [],
+    credits: undefined,
   });
 
   const filteredLectures = useMemo(() => {
@@ -137,13 +139,16 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
   }, [lectures, searchOptions]);
+
   const lastPage = useMemo(
     () => Math.ceil(filteredLectures.length / PAGE_SIZE),
     [filteredLectures.length]
   );
+
   const visibleLectures = useMemo(() => {
     return filteredLectures.slice(0, page * PAGE_SIZE);
   }, [filteredLectures, page]);
+
   const allMajors = useMemo(
     () => [...new Set(lectures.map((lecture) => lecture.major))],
     [lectures]
@@ -166,17 +171,23 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       if (!searchInfo) return;
 
       const { tableId } = searchInfo;
-      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-        ...schedule,
+      const newSchedules: Omit<Schedule, 'id'>[] = parseSchedule(lecture.schedule).map((schedulePart) => ({
+        ...schedulePart,
         lecture,
       }));
-      setSchedulesMap((prev) => ({
-        ...prev,
-        [tableId]: [...prev[tableId], ...schedules],
-      }));
+
+      const currentSchedulesForTable = schedulesMap[tableId] || [];
+      const enrichedNewSchedules: Schedule[] = newSchedules.map((scheduleItem, idx) => ({
+        ...scheduleItem,
+        id: `${lecture.id}-${tableId}-${Date.now()}-${idx}`,
+      })) as Schedule[];
+
+
+      const updatedSchedulesForTable = [...currentSchedulesForTable, ...enrichedNewSchedules];
+      updateScheduleList(tableId, updatedSchedulesForTable);
       onClose();
     },
-    [searchInfo, setSchedulesMap, onClose]
+    [searchInfo, schedulesMap, updateScheduleList, onClose]
   );
 
   useEffect(() => {
@@ -184,12 +195,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     console.log('API 호출 시작:', start);
   
     fetchAllLectures()
-      .then(results => {
+      .then(data => {
         const end = performance.now();
         console.log('모든 API 호출 완료:', end);
         console.log('API 호출에 걸린 시간(ms):', end - start);
 
-        setLectures(results.flat());
+        setLectures(data);
       })
       .catch(err => {
         console.error('API 호출 중 에러:', err);
@@ -200,7 +211,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     const $loader = loaderRef.current;
     const $loaderWrapper = loaderWrapperRef.current;
 
-    if (!$loader || !$loaderWrapper) {
+    if (!$loader || !$loaderWrapper || page >= lastPage) {
       return;
     }
 
@@ -216,7 +227,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     observer.observe($loader);
 
     return () => observer.unobserve($loader);
-  }, [lastPage]);
+  }, [lastPage, page]);
 
   useEffect(() => {
     setSearchOptions(prev => ({

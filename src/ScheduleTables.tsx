@@ -1,31 +1,32 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
-import ScheduleTable from "./ScheduleTable.tsx";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import SearchDialog from "./SearchDialog.tsx";
+import ScheduleTable from "./ScheduleTable";
+import { useSchedulesData, useScheduleActions } from "./ScheduleContext";
+import SearchDialog from "./SearchDialog";
 import { useState } from "react";
+import { Schedule } from "./types";
 
 export const ScheduleTables = () => {
-  const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const schedulesMap = useSchedulesData();
+  const actions = useScheduleActions();
+
   const [searchInfo, setSearchInfo] = useState<{
     tableId: string;
     day?: string;
     time?: number;
   } | null>(null);
 
-  const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
+  const disabledRemoveButton = Object.keys(schedulesMap).length <= 1;
 
   const duplicate = (targetId: string) => {
-    setSchedulesMap(prev => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]]
-    }))
+    const copiedScheduleItem = schedulesMap[targetId];
+    if (copiedScheduleItem) {
+      const newTableId = `schedule-${Date.now()}`;
+      actions.updateScheduleList(newTableId, [...copiedScheduleItem]);
+    }
   };
 
   const remove = (targetId: string) => {
-    setSchedulesMap(prev => {
-      delete prev[targetId];
-      return { ...prev };
-    })
+    actions.removeScheduleTable(targetId);
   };
 
   return (
@@ -47,15 +48,18 @@ export const ScheduleTables = () => {
               schedules={schedules}
               tableId={tableId}
               onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
-              onDeleteButtonClick={({ day, time }) => setSchedulesMap((prev) => ({
-                ...prev,
-                [tableId]: prev[tableId].filter(schedule => schedule.day !== day || !schedule.range.includes(time))
-              }))}
+              onDeleteButtonClick={({ day, time }) => {
+                const target = schedulesMap[tableId];
+                if (target) {
+                  const newList = target.filter(schedule => schedule.day !== day || !schedule.range.includes(time));
+                  actions.updateScheduleList(tableId, newList);
+                }
+              }}
             />
           </Stack>
         ))}
       </Flex>
-      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)}/>
+      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
     </>
   );
 }
