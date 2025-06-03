@@ -34,6 +34,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS, TIME_SLOTS } from "./constants.ts";
+import ScheduleMemoizedMajors from "./ScheduleMemoizedMajors.tsx";
 
 interface Props {
   searchInfo: {
@@ -369,23 +370,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                       </Tag>
                     ))}
                   </Wrap>
-                  <Stack
-                    spacing={2}
-                    overflowY="auto"
-                    h="100px"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderRadius={5}
-                    p={2}
-                  >
-                    {allMajors.map((major) => (
-                      <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
-                          {major}
-                        </Checkbox>
-                      </Box>
-                    ))}
-                  </Stack>
+                  <ScheduleMemoizedMajors majors={allMajors} />
                 </CheckboxGroup>
               </FormControl>
             </HStack>
