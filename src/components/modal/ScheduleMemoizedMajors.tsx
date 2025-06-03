@@ -2,7 +2,7 @@ import { Stack, Box, Checkbox } from "@chakra-ui/react";
 import { memo } from "react";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
-import { FixedSizeList as MajorsList } from "react-window"; // ✅ 정답
+import { FixedSizeList as MajorsList } from "react-window";
 
 function ScheduleMemoizedMajors({ majors }: { majors: string[] }) {
   console.log("전공 렌더링");
