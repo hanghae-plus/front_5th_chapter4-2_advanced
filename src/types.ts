@@ -8,6 +8,7 @@ export interface Lecture {
 }
 
 export interface Schedule {
+  id?: string;
   lecture: Lecture
   day: string;
   range: number[]

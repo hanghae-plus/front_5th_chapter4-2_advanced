@@ -3,7 +3,6 @@ import ScheduleTable from "./ScheduleTable";
 import { useSchedulesData, useScheduleActions } from "./ScheduleContext";
 import SearchDialog from "./SearchDialog";
 import { useState } from "react";
-import { Schedule } from "./types";
 
 export const ScheduleTables = () => {
   const schedulesMap = useSchedulesData();

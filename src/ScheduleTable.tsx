@@ -166,10 +166,11 @@ const ScheduleTable = memo(({ tableId, schedules, onScheduleTimeClick, onDeleteB
 ScheduleTable.displayName = "ScheduleTable";
 
 
-interface DraggableScheduleProps extends ComponentProps<typeof Box> {
+interface DraggableScheduleProps extends ComponentProps<'div'> {
   id: string;
   data: Schedule;
   requestDelete: (schedule: Schedule) => void;
+  bg: string;
 }
 
 /**
@@ -187,7 +188,6 @@ const DraggableSchedule = memo(({ id, data, bg, requestDelete, ...restOfBoxProps
   const size = range.length;
 
   const style = {
-    ...restOfBoxProps.style,
     position: "absolute" as const,
     left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
     top: `${40 + topIndex * CellSize.HEIGHT + 1}px`,
