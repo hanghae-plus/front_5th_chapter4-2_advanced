@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
-  Button,
   CheckboxGroup,
   FormControl,
   FormLabel,
@@ -18,8 +17,6 @@ import {
   Tag,
   TagCloseButton,
   TagLabel,
-  Tbody,
-  Td,
   Text,
   Th,
   Thead,
@@ -36,6 +33,7 @@ import {
   ScheduleGradeCheckbox,
   ScheduleDaysCheckbox,
   ScheduleTimeCheckbox,
+  ScheduleMemoizedLecture,
 } from "./components/modal/index.ts";
 
 interface Props {
@@ -56,7 +54,7 @@ export interface SearchOption {
   credits?: number;
 }
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 20;
 
 const createdCacheFetch = () => {
   const cache = new Map();
@@ -317,35 +315,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </Table>
 
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
-                <Table size="sm" variant="striped">
-                  <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture)}
-                          >
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
+                <ScheduleMemoizedLecture
+                  visibleLectures={visibleLectures}
+                  addSchedule={addSchedule}
+                  lastPage={lastPage}
+                  setPage={setPage}
+                />
                 <Box ref={loaderRef} h="20px" />
               </Box>
             </Box>
