@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -98,14 +98,27 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const lecturesWithParsedSchedules = useMemo(() => {
+    return lectures.map((lecture) => ({
+      ...lecture,
+      parsedSchedule: lecture.schedule ? parseSchedule(lecture.schedule) : [],
+    }));
+  }, [lectures]);
+
+  const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
-    return lectures
-      .filter(
-        (lecture) =>
-          lecture.title.toLowerCase().includes(query.toLowerCase()) ||
-          lecture.id.toLowerCase().includes(query.toLowerCase())
-      )
+
+    return lecturesWithParsedSchedules
+      .filter((lecture) => {
+        if (query) {
+          const lowerQuery = query.toLowerCase();
+          return (
+            lecture.title.toLowerCase().includes(lowerQuery) ||
+            lecture.id.toLowerCase().includes(lowerQuery)
+          );
+        }
+        return true;
+      })
       .filter(
         (lecture) => grades.length === 0 || grades.includes(lecture.grade)
       )
@@ -116,58 +129,57 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         (lecture) => !credits || lecture.credits.startsWith(String(credits))
       )
       .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) => days.includes(s.day));
+        if (days.length === 0) return true;
+        return lecture.parsedSchedule.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) =>
+        if (times.length === 0) return true;
+        return lecture.parsedSchedule.some((s) =>
           s.range.some((time) => times.includes(time))
         );
       });
-  };
+  }, [lecturesWithParsedSchedules, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map((lecture) => lecture.major))];
+  const paginationData = useMemo(() => {
+    const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+    const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
 
-  const changeSearchOption = (
-    field: keyof SearchOption,
-    value: SearchOption[typeof field]
-  ) => {
-    setPage(1);
-    setSearchOptions({ ...searchOptions, [field]: value });
-    loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+    return { lastPage, visibleLectures };
+  }, [filteredLectures, page]);
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const allMajors = useMemo(() => {
+    return [...new Set(lectures.map((lecture) => lecture.major))];
+  }, [lectures]);
 
-    const { tableId } = searchInfo;
+  const changeSearchOption = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      setPage(1);
+      setSearchOptions({ ...searchOptions, [field]: value });
+      loaderWrapperRef.current?.scrollTo(0, 0);
+    },
+    []
+  );
 
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+      const { tableId } = searchInfo;
 
-    onClose();
-  };
+      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+        ...schedule,
+        lecture,
+      }));
+
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
+
+      onClose();
+    },
+    [searchInfo, setSchedulesMap, onClose]
+  );
 
   useEffect(() => {
     const start = performance.now();
@@ -191,7 +203,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setPage((prevPage) => Math.min(lastPage, prevPage + 1));
+          setPage((prevPage) =>
+            Math.min(paginationData.lastPage, prevPage + 1)
+          );
         }
       },
       { threshold: 0, root: $loaderWrapper }
@@ -200,7 +214,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     observer.observe($loader);
 
     return () => observer.unobserve($loader);
-  }, [lastPage]);
+  }, [paginationData.lastPage]);
 
   useEffect(() => {
     setSearchOptions((prev) => ({
@@ -403,7 +417,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
                 <Table size="sm" variant="striped">
                   <Tbody>
-                    {visibleLectures.map((lecture, index) => (
+                    {paginationData.visibleLectures.map((lecture, index) => (
                       <Tr key={`${lecture.id}-${index}`}>
                         <Td width="100px">{lecture.id}</Td>
                         <Td width="50px">{lecture.grade}</Td>
@@ -440,4 +454,4 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   );
 };
 
-export default SearchDialog;
+export default memo(SearchDialog);
