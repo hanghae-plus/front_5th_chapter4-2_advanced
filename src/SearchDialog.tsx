@@ -106,9 +106,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     return getFilteredLectures(lectures, searchOptions);
   }, [lectures, searchOptions]);
 
-  const lastPage = useMemo(() => {
-    return Math.ceil(filteredLectures.length / PAGE_SIZE);
-  }, [filteredLectures]);
+  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
 
   const visibleLectures = useMemo(() => {
     return filteredLectures.slice(0, page * PAGE_SIZE);
