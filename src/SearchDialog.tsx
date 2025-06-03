@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
-  Checkbox,
-  CheckboxGroup,
   FormControl,
   FormLabel,
   HStack,
@@ -14,11 +12,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Stack,
   Table,
-  Tag,
-  TagCloseButton,
-  TagLabel,
   Tbody,
   Td,
   Text,
@@ -26,17 +20,17 @@ import {
   Thead,
   Tr,
   VStack,
-  Wrap,
 } from "@chakra-ui/react";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
-import { DAY_LABELS } from "./constants.ts";
 import {
   CreditSelector,
   DayCheckbox,
   GradeCheckbox,
+  MajorCheckbox,
+  SearchInput,
   TimeCheckbox,
 } from "./components";
 
@@ -158,14 +152,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [lectures]
   );
 
-  const changeSearchOption = (
-    field: keyof SearchOption,
-    value: SearchOption[typeof field]
-  ) => {
-    setPage(1);
-    setSearchOptions({ ...searchOptions, [field]: value });
-    loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  const changeSearchOption = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      setPage(1);
+      setSearchOptions((prev) => ({ ...prev, [field]: value }));
+      loaderWrapperRef.current?.scrollTo(0, 0);
+    },
+    []
+  );
 
   const addSchedule = (lecture: Lecture) => {
     if (!searchInfo) return;
@@ -227,6 +221,36 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     setPage(1);
   }, [searchInfo]);
 
+  const handleCreditChange = useCallback(
+    (value: number) => changeSearchOption("credits", value),
+    [changeSearchOption]
+  );
+
+  const handleGradeChange = useCallback(
+    (value: number[]) => changeSearchOption("grades", value),
+    [changeSearchOption]
+  );
+
+  const handleDayChange = useCallback(
+    (value: string[]) => changeSearchOption("days", value),
+    [changeSearchOption]
+  );
+
+  const handleTimeChange = useCallback(
+    (value: number[]) => changeSearchOption("times", value),
+    [changeSearchOption]
+  );
+
+  const handleMajorsChange = useCallback(
+    (value: string[]) => changeSearchOption("majors", value),
+    [changeSearchOption]
+  );
+
+  const handleQueryChange = useCallback(
+    (value: string) => changeSearchOption("query", value),
+    [changeSearchOption]
+  );
+
   return (
     <Modal isOpen={Boolean(searchInfo)} onClose={onClose} size="6xl">
       <ModalOverlay />
@@ -236,87 +260,39 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         <ModalBody>
           <VStack spacing={4} align="stretch">
             <HStack spacing={4}>
-              <FormControl>
-                <FormLabel>검색어</FormLabel>
-                <Input
-                  placeholder="과목명 또는 과목코드"
-                  value={searchOptions.query}
-                  onChange={(e) => changeSearchOption("query", e.target.value)}
-                />
-              </FormControl>
+              <SearchInput
+                value={searchOptions.query}
+                onChange={handleQueryChange}
+              />
 
               <CreditSelector
                 value={searchOptions.credits}
-                onChange={(value) => changeSearchOption("credits", value)}
+                onChange={handleCreditChange}
               />
             </HStack>
 
             <HStack spacing={4}>
               <GradeCheckbox
                 value={searchOptions.grades}
-                onChange={(value) => changeSearchOption("grades", value)}
+                onChange={handleGradeChange}
               />
 
               <DayCheckbox
                 value={searchOptions.days}
-                onChange={(value) => changeSearchOption("days", value)}
+                onChange={handleDayChange}
               />
             </HStack>
 
             <HStack spacing={4}>
               <TimeCheckbox
                 times={searchOptions.times}
-                onChange={(value) => changeSearchOption("times", value)}
+                onChange={handleTimeChange}
               />
-
-              <FormControl>
-                <FormLabel>전공</FormLabel>
-                <CheckboxGroup
-                  colorScheme="green"
-                  value={searchOptions.majors}
-                  onChange={(values) =>
-                    changeSearchOption("majors", values as string[])
-                  }
-                >
-                  <Wrap spacing={1} mb={2}>
-                    {searchOptions.majors.map((major) => (
-                      <Tag
-                        key={major}
-                        size="sm"
-                        variant="outline"
-                        colorScheme="blue"
-                      >
-                        <TagLabel>{major.split("<p>").pop()}</TagLabel>
-                        <TagCloseButton
-                          onClick={() =>
-                            changeSearchOption(
-                              "majors",
-                              searchOptions.majors.filter((v) => v !== major)
-                            )
-                          }
-                        />
-                      </Tag>
-                    ))}
-                  </Wrap>
-                  <Stack
-                    spacing={2}
-                    overflowY="auto"
-                    h="100px"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderRadius={5}
-                    p={2}
-                  >
-                    {allMajors.map((major) => (
-                      <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
-                          {major.replace(/<p>/gi, " ")}
-                        </Checkbox>
-                      </Box>
-                    ))}
-                  </Stack>
-                </CheckboxGroup>
-              </FormControl>
+              <MajorCheckbox
+                majors={searchOptions.majors}
+                onChange={handleMajorsChange}
+                allMajors={allMajors}
+              />
             </HStack>
             <Text align="right">검색결과: {filteredLectures.length}개</Text>
             <Box>
