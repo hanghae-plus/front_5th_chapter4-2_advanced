@@ -1,8 +1,10 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from '@chakra-ui/react';
 import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
-import SearchDialog from './SearchDialog.tsx';
-import { useState } from 'react';
+// import SearchDialog from './SearchDialog.tsx';
+import { Suspense, lazy, useCallback, useState } from 'react';
+
+const SearchDialog = lazy(() => import('./SearchDialog.tsx'));
 
 interface ScheduleTablesProps {
   activeTableId: string | null;
@@ -31,6 +33,10 @@ export const ScheduleTables = ({ activeTableId }: ScheduleTablesProps) => {
       return { ...prev };
     });
   };
+
+  const closeDialog = useCallback(() => {
+    setSearchInfo(null);
+  }, []);
 
   return (
     <>
@@ -75,7 +81,9 @@ export const ScheduleTables = ({ activeTableId }: ScheduleTablesProps) => {
           </Stack>
         ))}
       </Flex>
-      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
+      <Suspense fallback={null}>
+        {searchInfo && <SearchDialog searchInfo={searchInfo} onClose={closeDialog} />}
+      </Suspense>
     </>
   );
 };
