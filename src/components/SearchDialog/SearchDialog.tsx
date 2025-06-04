@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Box,
-  Button,
   HStack,
   Modal,
   ModalBody,
@@ -9,26 +7,21 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Table,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   VStack,
 } from "@chakra-ui/react";
 import CreditSelect from "./CreditSelect";
 import DaySelect from "./DaySelect";
 import GradeSelect from "./GradeSelect";
+import LectureTable from "./LectureTable";
 import MajorSelect from "./MajorSelect";
 import SearchInput from "./SearchInput";
+import TimeSelect from "./TimeSelect";
 import { useScheduleContext } from "@/ScheduleContext.tsx";
 import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
 import { parseSchedule } from "@/utils.ts";
 import { SearchOption } from "@/types.ts";
-import TimeSelect from "./TimeSelect";
 
 interface Props {
   searchInfo: {
@@ -129,6 +122,8 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   const changeSearchOption = useCallback(
     (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      console.log(field, value);
+
       setPage(1);
       setSearchOptions((prevSearchOptions) => ({
         ...prevSearchOptions,
@@ -139,23 +134,26 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [],
   );
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    const { tableId } = searchInfo;
+      const { tableId } = searchInfo;
 
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
+      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+        ...schedule,
+        lecture,
+      }));
 
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
 
-    onClose();
-  };
+      onClose();
+    },
+    [searchInfo, onClose, setSchedulesMap],
+  );
 
   useEffect(() => {
     const start = performance.now();
@@ -253,61 +251,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               />
             </HStack>
             <Text align="right">검색결과: {filteredLectures.length}개</Text>
-            <Box>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th width="100px">과목코드</Th>
-                    <Th width="50px">학년</Th>
-                    <Th width="200px">과목명</Th>
-                    <Th width="50px">학점</Th>
-                    <Th width="150px">전공</Th>
-                    <Th width="150px">시간</Th>
-                    <Th width="80px"></Th>
-                  </Tr>
-                </Thead>
-              </Table>
-
-              <Box
-                overflowY="auto"
-                maxH="500px"
-                ref={loaderWrapperRef}>
-                <Table
-                  size="sm"
-                  variant="striped">
-                  <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture)}>
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-                <Box
-                  ref={loaderRef}
-                  h="20px"
-                />
-              </Box>
-            </Box>
+            <LectureTable
+              loaderWrapperRef={loaderWrapperRef}
+              loaderRef={loaderRef}
+              visibleLectures={visibleLectures}
+              addSchedule={addSchedule}
+            />
           </VStack>
         </ModalBody>
       </ModalContent>
