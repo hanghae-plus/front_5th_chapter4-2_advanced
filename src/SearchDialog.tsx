@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -82,9 +82,25 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
-const fetchLiberalArts = () =>
-  axios.get<Lecture[]>("/schedules-liberal-arts.json");
+const fetchMajors = (() => {
+  let promise: ReturnType<typeof axios.get> | null = null;
+  return () => {
+    if (!promise) {
+      promise = axios.get<Lecture[]>("/schedules-majors.json");
+    }
+    return promise;
+  };
+})();
+
+const fetchLiberalArts = (() => {
+  let promise: ReturnType<typeof axios.get> | null = null;
+  return () => {
+    if (!promise) {
+      promise = axios.get<Lecture[]>("/schedules-liberal-arts.json");
+    }
+    return promise;
+  };
+})();
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 const fetchAllLectures = async () =>
@@ -112,6 +128,24 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     times: [],
     majors: []
   });
+
+  // useRef로 캐시와 Promise를 관리
+  const cacheRef = useRef<{ cached: Lecture[] | null; promise: Promise<Lecture[]> | null }>({
+    cached: null,
+    promise: null,
+  });
+
+  const getLectures = useCallback(() => {
+    if (cacheRef.current.cached) return Promise.resolve(cacheRef.current.cached);
+    if (!cacheRef.current.promise) {
+      cacheRef.current.promise = fetchAllLectures().then((results) => {
+        const allLectures = results.flatMap((result) => result.data);
+        cacheRef.current.cached = allLectures;
+        return allLectures;
+      });
+    }
+    return cacheRef.current.promise;
+  }, []);
 
   const getFilteredLectures = () => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
@@ -187,13 +221,13 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   useEffect(() => {
     const start = performance.now();
     console.log("API 호출 시작: ", start);
-    fetchAllLectures().then((results) => {
+    getLectures().then((allLectures) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(results.flatMap((result) => result.data));
+      setLectures(allLectures);
     });
-  }, []);
+  }, [getLectures]);
 
   useEffect(() => {
     const $loader = loaderRef.current;
