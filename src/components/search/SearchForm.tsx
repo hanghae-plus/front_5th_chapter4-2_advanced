@@ -5,7 +5,6 @@ import {
   FormControl,
   FormLabel,
   HStack,
-  Input,
   Select,
   Stack,
   Tag,
@@ -16,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { DAY_LABELS } from "../../constants.ts";
 import { MajorCheckbox, TimeSlotCheckbox } from "./index";
+import SearchInput from "./SearchInput";
 
 interface SearchOption {
   query?: string;
@@ -65,9 +65,10 @@ const TIME_SLOTS = [
 // 검색 폼 컴포넌트 - 검색 옵션이 변경되어도 테이블은 리렌더링되지 않음
 const SearchForm = memo(
   ({ searchOptions, allMajors, idPrefix, onSearchOptionChange, onMajorToggle, onTimeSlotToggle }: SearchFormProps) => {
+    // 검색어 변경 핸들러
     const handleQueryChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        onSearchOptionChange("query", e.target.value);
+      (query: string) => {
+        onSearchOptionChange("query", query);
       },
       [onSearchOptionChange]
     );
@@ -116,15 +117,7 @@ const SearchForm = memo(
     return (
       <VStack spacing={4} align="stretch">
         <HStack spacing={4}>
-          <FormControl>
-            <FormLabel htmlFor={`${idPrefix}-query`}>검색어</FormLabel>
-            <Input
-              id={`${idPrefix}-query`}
-              placeholder="과목명 또는 과목코드"
-              value={searchOptions.query}
-              onChange={handleQueryChange}
-            />
-          </FormControl>
+          <SearchInput query={searchOptions.query} idPrefix={idPrefix} onQueryChange={handleQueryChange} />
 
           <FormControl>
             <FormLabel htmlFor={`${idPrefix}-credits`}>학점</FormLabel>
