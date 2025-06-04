@@ -52,27 +52,21 @@ const ScheduleTable = React.memo(
       [lectureColors],
     );
 
-    const activeTableId = useMemo(() => {
+    const isCurrentTableActive = useMemo(() => {
       const activeId = dndContext.active?.id;
-      if (!activeId) return null;
-
-      const activeIdStr = String(activeId);
-      const colonIndex = activeIdStr.indexOf(":");
-      return colonIndex !== -1 ? activeIdStr.substring(0, colonIndex) : null;
-    }, [dndContext.active?.id]);
+      if (!activeId) return false;
+      return String(activeId).startsWith(`${tableId}:`);
+    }, [dndContext.active?.id, tableId]);
 
     const scheduleKeys = useMemo(
-      () =>
-        schedules.map(
-          (schedule, index) => `${tableId}-${index}-${schedule.lecture.id}`,
-        ),
-      [schedules, tableId],
+      () => schedules.map((_, index) => `${tableId}-${index}`),
+      [schedules.length, tableId],
     );
 
     return (
       <Box
         position="relative"
-        outline={activeTableId === tableId ? "5px dashed" : undefined}
+        outline={isCurrentTableActive ? "5px dashed" : undefined}
         outlineColor="blue.300"
       >
         <Grid

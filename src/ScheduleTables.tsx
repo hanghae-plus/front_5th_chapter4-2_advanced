@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
-import ScheduleTable from "./ScheduleTable.tsx";
+import ScheduleTableWithContext from "./ScheduleTableWithContext.tsx";
 import { useScheduleDispatch, useScheduleState } from "./ScheduleContext.tsx";
 import SearchDialog from "./SearchDialog.tsx";
 import { useCallback, useState } from "react";
@@ -85,10 +85,9 @@ export const ScheduleTables = () => {
                 </Button>
               </ButtonGroup>
             </Flex>
-            <ScheduleTable
-              key={`schedule-table-${index}`}
-              schedules={schedules}
+            <ScheduleTableWithContext
               tableId={tableId}
+              schedules={schedules}
               onScheduleTimeClick={handleScheduleTimeClick(tableId)}
             />
           </Stack>
