@@ -14,6 +14,7 @@ export interface Schedule {
   room?: string;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface ApiResponse<T> {
   data: T;
   status: number;
