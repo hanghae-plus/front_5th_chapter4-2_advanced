@@ -6,7 +6,7 @@ export default function fetchApi<T>({
   method,
   url,
   body,
-}: fetchApiParams): () => Promise<AxiosResponse<T, unknown>> {
+}: fetchApiParams): () => Promise<AxiosResponse<T, any>> | null {
   const cachedApi: Record<string, Promise<AxiosResponse<T>> | null> = {};
 
   return () => {
