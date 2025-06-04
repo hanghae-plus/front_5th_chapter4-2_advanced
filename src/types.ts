@@ -1,3 +1,4 @@
+import type { Method } from "axios";
 export interface Lecture {
   id: string;
   title: string;
@@ -8,8 +9,14 @@ export interface Lecture {
 }
 
 export interface Schedule {
-  lecture: Lecture
+  lecture: Lecture;
   day: string;
-  range: number[]
+  range: number[];
   room?: string;
+}
+
+export interface fetchApiParams {
+  method: Extract<Method, Lowercase<Method>>;
+  url: string;
+  body?: unknown;
 }
