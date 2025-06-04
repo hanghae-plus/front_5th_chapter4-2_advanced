@@ -32,7 +32,6 @@ import { Lecture } from './types.ts';
 import { parseSchedule } from './utils.ts';
 import { DAY_LABELS } from './constants.ts';
 import LectureRow from './LectureRow.tsx';
-import { fetchAllLectures } from './api.ts';
 
 interface Props {
   searchInfo: {
@@ -109,6 +108,7 @@ const PAGE_SIZE = 100;
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ lectures, searchInfo, onClose }: Props) => {
   const { setSchedulesMap } = useScheduleContext();
+  const [filteredLectures, setFilteredLectures] = useState<Lecture[]>([]);
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -121,9 +121,36 @@ const SearchDialog = ({ lectures, searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const filteredLectures = useMemo(() => {
+  // const filteredLectures = useMemo(() => {
+  //   const { query = '', credits, grades, days, times, majors } = searchOptions;
+  //   return lectures
+  //     .filter(
+  //       (lecture) =>
+  //         lecture.title.toLowerCase().includes(query.toLowerCase()) ||
+  //         lecture.id.toLowerCase().includes(query.toLowerCase())
+  //     )
+  //     .filter((lecture) => grades.length === 0 || grades.includes(lecture.grade))
+  //     .filter((lecture) => majors.length === 0 || majors.includes(lecture.major))
+  //     .filter((lecture) => !credits || lecture.credits.startsWith(String(credits)))
+  //     .filter((lecture) => {
+  //       if (days.length === 0) {
+  //         return true;
+  //       }
+  //       const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
+  //       return schedules.some((s) => days.includes(s.day));
+  //     })
+  //     .filter((lecture) => {
+  //       if (times.length === 0) {
+  //         return true;
+  //       }
+  //       const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
+  //       return schedules.some((s) => s.range.some((time) => times.includes(time)));
+  //     });
+  // }, [searchOptions, lectures]);
+  useEffect(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
-    return lectures
+
+    const result = lectures
       .filter(
         (lecture) =>
           lecture.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -133,19 +160,17 @@ const SearchDialog = ({ lectures, searchInfo, onClose }: Props) => {
       .filter((lecture) => majors.length === 0 || majors.includes(lecture.major))
       .filter((lecture) => !credits || lecture.credits.startsWith(String(credits)))
       .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
+        if (days.length === 0) return true;
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
+        if (times.length === 0) return true;
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some((s) => s.range.some((time) => times.includes(time)));
       });
+
+    setFilteredLectures(result);
   }, [searchOptions, lectures]);
 
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
@@ -166,7 +191,7 @@ const SearchDialog = ({ lectures, searchInfo, onClose }: Props) => {
       setSearchOptions({ ...searchOptions, [field]: value });
       loaderWrapperRef.current?.scrollTo(0, 0);
     },
-    []
+    [searchOptions]
   );
 
   const addSchedule = useCallback(
