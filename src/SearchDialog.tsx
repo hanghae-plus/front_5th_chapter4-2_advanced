@@ -137,10 +137,20 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
+  // 미리 파싱해서 캐싱
+  const lecturesWithParsedSchedule = useMemo(
+    () =>
+      lectures.map((lectures) => ({
+        ...lectures,
+        schedule: lectures.schedule ? parseSchedule(lectures.schedule) : [],
+      })),
+    [lectures]
+  );
+
   const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
 
-    return lectures
+    return lecturesWithParsedSchedule
       .filter(
         (lecture) =>
           lecture.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -159,25 +169,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         if (days.length === 0) {
           return true;
         }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) => days.includes(s.day));
+        return lecture.schedule.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
         if (times.length === 0) {
           return true;
         }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) =>
+        return lecture.schedule.some((s) =>
           s.range.some((time) => times.includes(time))
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    lectures,
+    lecturesWithParsedSchedule,
     searchOptions.query,
     searchOptions.credits,
     JSON.stringify(searchOptions.grades),
