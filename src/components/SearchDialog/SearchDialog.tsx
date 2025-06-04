@@ -21,7 +21,7 @@ import {
 import CreditSelect from "./CreditSelect";
 import DaySelect from "./DaySelect";
 import GradeSelect from "./GradeSelect";
-import MajorFilter from "./MajorFilter";
+import MajorSelect from "./MajorSelect";
 import SearchInput from "./SearchInput";
 import { useScheduleContext } from "@/ScheduleContext.tsx";
 import fetchApi from "@/lib/fetchApi.ts";
@@ -246,7 +246,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 changeSearchOption={changeSearchOption}
               />
 
-              <MajorFilter
+              <MajorSelect
                 majors={searchOptions.majors}
                 changeSearchOption={changeSearchOption}
                 allMajors={allMajors}

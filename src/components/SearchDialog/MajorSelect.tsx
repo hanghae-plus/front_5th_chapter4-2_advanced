@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import type { SearchOption } from "@/types";
 
-interface MajorFilterProps {
+interface MajorSelectProps {
   majors: SearchOption["majors"];
   changeSearchOption: (
     field: keyof SearchOption,
@@ -22,11 +22,11 @@ interface MajorFilterProps {
   allMajors: string[];
 }
 
-const MajorFilter = ({
+const MajorSelect = ({
   majors,
   changeSearchOption,
   allMajors,
-}: MajorFilterProps) => {
+}: MajorSelectProps) => {
   return (
     <FormControl>
       <FormLabel>전공</FormLabel>
@@ -64,9 +64,9 @@ const MajorFilter = ({
           borderRadius={5}
           p={2}>
           {allMajors.map((major) => (
-            <Box key={major}>
+            <Box key={`box-${major}`}>
               <Checkbox
-                key={major}
+                key={`checkbox-${major}`}
                 size="sm"
                 value={major}>
                 {major.replace(/<p>/gi, " ")}
@@ -79,4 +79,4 @@ const MajorFilter = ({
   );
 };
 
-export default memo(MajorFilter);
+export default memo(MajorSelect);
