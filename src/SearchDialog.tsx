@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, useMemo, useCallback, memo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
-  Button,
   Checkbox,
   CheckboxGroup,
   FormControl,
@@ -21,7 +20,6 @@ import {
   TagCloseButton,
   TagLabel,
   Tbody,
-  Td,
   Text,
   Th,
   Thead,
@@ -34,6 +32,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
+import { LectureRow, MajorCheckbox, TimeSlotCheckbox } from "./components";
 
 interface Props {
   searchInfo: {
@@ -129,95 +128,6 @@ const fetchAllLectures = async () => {
 
   return results;
 };
-
-// 강의 행 컴포넌트 - 개별 행의 불필요한 리렌더링 방지
-const LectureRow = memo(
-  ({
-    lecture,
-    index,
-    onAddSchedule,
-  }: {
-    lecture: Lecture;
-    index: number;
-    onAddSchedule: (lecture: Lecture) => void;
-  }) => {
-    const handleAddClick = useCallback(() => {
-      onAddSchedule(lecture);
-    }, [lecture, onAddSchedule]);
-
-    return (
-      <Tr key={`${lecture.id}-${index}`}>
-        <Td width="100px">{lecture.id}</Td>
-        <Td width="50px">{lecture.grade}</Td>
-        <Td width="200px">{lecture.title}</Td>
-        <Td width="50px">{lecture.credits}</Td>
-        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }} />
-        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.schedule }} />
-        <Td width="80px">
-          <Button size="sm" colorScheme="green" onClick={handleAddClick}>
-            추가
-          </Button>
-        </Td>
-      </Tr>
-    );
-  }
-);
-
-// 전공 체크박스 컴포넌트 - 개별 체크박스의 불필요한 리렌더링 방지
-const MajorCheckbox = memo(
-  ({
-    major,
-    isChecked,
-    onToggle,
-  }: {
-    major: string;
-    isChecked: boolean;
-    onToggle: (major: string, checked: boolean) => void;
-  }) => {
-    const handleChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        onToggle(major, e.target.checked);
-      },
-      [major, onToggle]
-    );
-
-    return (
-      <Box key={major}>
-        <Checkbox size="sm" isChecked={isChecked} onChange={handleChange}>
-          {major.replace(/<p>/gi, " ")}
-        </Checkbox>
-      </Box>
-    );
-  }
-);
-
-// 시간 슬롯 체크박스 컴포넌트 - 개별 체크박스의 불필요한 리렌더링 방지
-const TimeSlotCheckbox = memo(
-  ({
-    timeSlot,
-    isChecked,
-    onToggle,
-  }: {
-    timeSlot: { id: number; label: string };
-    isChecked: boolean;
-    onToggle: (id: number, checked: boolean) => void;
-  }) => {
-    const handleChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        onToggle(timeSlot.id, e.target.checked);
-      },
-      [timeSlot.id, onToggle]
-    );
-
-    return (
-      <Box key={timeSlot.id}>
-        <Checkbox size="sm" isChecked={isChecked} onChange={handleChange}>
-          {timeSlot.id}교시({timeSlot.label})
-        </Checkbox>
-      </Box>
-    );
-  }
-);
 
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const { setSchedulesMap } = useScheduleContext();
