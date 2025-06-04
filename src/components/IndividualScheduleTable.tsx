@@ -1,7 +1,6 @@
 import { memo, useCallback } from "react";
 import { Schedule } from "../types";
 import { useSearchStore } from "../store/searchStore";
-import { useScheduleContext } from "../ScheduleContext";
 import { Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleButtonGroup from "./ScheduleButtonGroup";
 import ScheduleTable from "../ScheduleTable";
@@ -10,11 +9,18 @@ interface IndividualScheduleTableProps {
   tableId: string;
   schedules: Schedule[];
   index: number;
+  setSchedulesMap: React.Dispatch<
+    React.SetStateAction<Record<string, Schedule[]>>
+  >;
 }
 
 const IndividualScheduleTable = memo(
-  ({ tableId, schedules, index }: IndividualScheduleTableProps) => {
-    const { setSchedulesMap } = useScheduleContext();
+  ({
+    tableId,
+    schedules,
+    index,
+    setSchedulesMap,
+  }: IndividualScheduleTableProps) => {
     const { setSearchInfo } = useSearchStore();
 
     const handleScheduleTimeClick = useCallback(
@@ -26,7 +32,7 @@ const IndividualScheduleTable = memo(
 
     const handleScheduleDeleteClick = useCallback(
       (tableId: string, { day, time }: { day: string; time: number }) => {
-        setSchedulesMap((prev) => ({
+        setSchedulesMap((prev: Record<string, Schedule[]>) => ({
           ...prev,
           [tableId]: prev[tableId].filter(
             (schedule) => schedule.day !== day || !schedule.range.includes(time)
@@ -45,6 +51,7 @@ const IndividualScheduleTable = memo(
           <ScheduleButtonGroup
             tableId={tableId}
             scheduleCount={schedules.length}
+            setSchedulesMap={setSchedulesMap}
           />
         </Flex>
         <ScheduleTable

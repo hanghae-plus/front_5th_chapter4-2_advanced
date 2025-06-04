@@ -1,17 +1,19 @@
 import { memo, useCallback } from "react";
 import { useSearchStore } from "../store/searchStore.ts";
 import { Button, ButtonGroup } from "@chakra-ui/react";
-import { useScheduleContext } from "../ScheduleContext.tsx";
+import { Schedule } from "../types.ts";
 
 interface ScheduleButtonGroupProps {
   tableId: string;
   scheduleCount: number;
+  setSchedulesMap: React.Dispatch<
+    React.SetStateAction<Record<string, Schedule[]>>
+  >;
 }
 
 const ScheduleButtonGroup = memo(
-  ({ tableId, scheduleCount }: ScheduleButtonGroupProps) => {
+  ({ tableId, scheduleCount, setSchedulesMap }: ScheduleButtonGroupProps) => {
     const { setSearchInfo } = useSearchStore();
-    const { setSchedulesMap } = useScheduleContext();
 
     const handleScheduleAddClick = useCallback(() => {
       setSearchInfo({ tableId });

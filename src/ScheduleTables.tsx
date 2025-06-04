@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import IndividualScheduleTable from "./components/IndividualScheduleTable.tsx";
 
 export const ScheduleTables = () => {
-  const { schedulesMap } = useScheduleContext();
+  const { schedulesMap, setSchedulesMap } = useScheduleContext();
 
   const scheduleList = useMemo(
     () => Object.entries(schedulesMap),
@@ -21,6 +21,7 @@ export const ScheduleTables = () => {
             tableId={tableId}
             schedules={schedules}
             index={index}
+            setSchedulesMap={setSchedulesMap}
           />
         ))}
       </Flex>
