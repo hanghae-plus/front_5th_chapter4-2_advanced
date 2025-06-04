@@ -26,6 +26,9 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
+const GRID_TEMPLATE_COLUMNS = `120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`;
+const GRID_TEMPLATE_ROWS = `40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`;
+
 const ScheduleTable = React.memo(
   ({ tableId, schedules, onScheduleTimeClick }: Props) => {
     const dndContext = useDndContext();
@@ -33,25 +36,38 @@ const ScheduleTable = React.memo(
     const lectureColors = useMemo(() => {
       const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
       const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-      return Object.fromEntries(
-        lectures.map((lectureId, index) => [
-          lectureId,
-          colors[index % colors.length],
-        ]),
-      );
+      const colorMap = new Map();
+
+      lectures.forEach((lectureId, index) => {
+        colorMap.set(lectureId, colors[index % colors.length]);
+      });
+
+      return colorMap;
     }, [schedules]);
 
     const getColor = useCallback(
       (lectureId: string) => {
-        return lectureColors[lectureId];
+        return lectureColors.get(lectureId) || "#fff";
       },
       [lectureColors],
     );
 
     const activeTableId = useMemo(() => {
       const activeId = dndContext.active?.id;
-      return activeId ? String(activeId).split(":")[0] : null;
+      if (!activeId) return null;
+
+      const activeIdStr = String(activeId);
+      const colonIndex = activeIdStr.indexOf(":");
+      return colonIndex !== -1 ? activeIdStr.substring(0, colonIndex) : null;
     }, [dndContext.active?.id]);
+
+    const scheduleKeys = useMemo(
+      () =>
+        schedules.map(
+          (schedule, index) => `${tableId}-${index}-${schedule.lecture.id}`,
+        ),
+      [schedules, tableId],
+    );
 
     return (
       <Box
@@ -60,8 +76,8 @@ const ScheduleTable = React.memo(
         outlineColor="blue.300"
       >
         <Grid
-          templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
-          templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
+          templateColumns={GRID_TEMPLATE_COLUMNS}
+          templateRows={GRID_TEMPLATE_ROWS}
           bg="white"
           fontSize="sm"
           textAlign="center"
@@ -134,7 +150,7 @@ const ScheduleTable = React.memo(
 
         {schedules.map((schedule, index) => (
           <DraggableSchedule
-            key={`${tableId}-${index}-${schedule.lecture.id}`}
+            key={scheduleKeys[index]}
             id={`${tableId}:${index}`}
             data={schedule}
             bg={getColor(schedule.lecture.id)}
@@ -159,14 +175,24 @@ const DraggableSchedule = React.memo(
     tableId: string;
   }) => {
     const { day, range, room, lecture } = data;
-    const { attributes, setNodeRef, listeners, transform } = useDraggable({
-      id,
-    });
+    const { attributes, setNodeRef, listeners, transform, isDragging } =
+      useDraggable({
+        id,
+      });
     const { showDeleteDialog } = useDialog();
 
-    const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
-    const topIndex = range[0] - 1;
-    const size = range.length;
+    const positionStyles = useMemo(() => {
+      const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
+      const topIndex = range[0] - 1;
+      const size = range.length;
+
+      return {
+        left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
+        top: `${40 + (topIndex * CellSize.HEIGHT + 1)}px`,
+        width: `${CellSize.WIDTH - 1}px`,
+        height: `${CellSize.HEIGHT * size - 1}px`,
+      };
+    }, [day, range]);
 
     const handleClick = useCallback(
       (event: React.MouseEvent) => {
@@ -180,13 +206,18 @@ const DraggableSchedule = React.memo(
       [showDeleteDialog, tableId, data.day, data.range],
     );
 
+    const textContent = useMemo(
+      () => ({
+        title: lecture.title,
+        room: room,
+      }),
+      [lecture.title, room],
+    );
+
     return (
       <Box
         position="absolute"
-        left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-        top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-        width={CellSize.WIDTH - 1 + "px"}
-        height={CellSize.HEIGHT * size - 1 + "px"}
+        {...positionStyles}
         bg={bg}
         p={1}
         boxSizing="border-box"
@@ -194,17 +225,31 @@ const DraggableSchedule = React.memo(
         ref={setNodeRef}
         transform={CSS.Translate.toString(transform)}
         onClick={handleClick}
+        opacity={isDragging ? 0.5 : 1}
         {...listeners}
         {...attributes}
       >
-        <Text
-          fontSize="sm"
-          fontWeight="bold"
-        >
-          {lecture.title}
-        </Text>
-        <Text fontSize="xs">{room}</Text>
+        <>
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+          >
+            {textContent.title}
+          </Text>
+          <Text fontSize="xs">{textContent.room}</Text>
+        </>
       </Box>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.id === nextProps.id &&
+      prevProps.bg === nextProps.bg &&
+      prevProps.data.day === nextProps.data.day &&
+      prevProps.data.range.length === nextProps.data.range.length &&
+      prevProps.data.range[0] === nextProps.data.range[0] &&
+      prevProps.data.lecture.id === nextProps.data.lecture.id &&
+      prevProps.data.room === nextProps.data.room
     );
   },
 );

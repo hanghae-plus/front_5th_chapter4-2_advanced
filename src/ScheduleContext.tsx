@@ -76,24 +76,33 @@ export const ScheduleProvider = ({ children }: PropsWithChildren) => {
         dayDelta: number,
         timeDelta: number,
       ) => {
+        if (dayDelta === 0 && timeDelta === 0) return;
+
         setSchedulesMap((prev) => {
-          const schedule = prev[tableId][index];
+          const schedules = prev[tableId];
+          if (!schedules || !schedules[index]) return prev;
+
+          const schedule = schedules[index];
           const nowDayIndex = DAY_LABELS.indexOf(
             schedule.day as (typeof DAY_LABELS)[number],
           );
+          const newDayIndex = nowDayIndex + dayDelta;
+
+          if (newDayIndex < 0 || newDayIndex >= DAY_LABELS.length) return prev;
+
+          const newRange = schedule.range.map((time) => time + timeDelta);
+          if (newRange.some((time) => time < 1 || time > 24)) return prev;
+
+          const newSchedules = [...schedules];
+          newSchedules[index] = {
+            ...schedule,
+            day: DAY_LABELS[newDayIndex],
+            range: newRange,
+          };
 
           return {
             ...prev,
-            [tableId]: prev[tableId].map((targetSchedule, targetIndex) => {
-              if (targetIndex !== index) {
-                return targetSchedule; // 불필요한 복사 제거!
-              }
-              return {
-                ...targetSchedule,
-                day: DAY_LABELS[nowDayIndex + dayDelta],
-                range: targetSchedule.range.map((time) => time + timeDelta),
-              };
-            }),
+            [tableId]: newSchedules,
           };
         });
       },
@@ -126,9 +135,12 @@ export const ScheduleProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
+  const contextValue = useMemo(() => schedulesMap, [schedulesMap]);
+  const dispatchValue = useMemo(() => actions, [actions]);
+
   return (
-    <ScheduleStateContext.Provider value={schedulesMap}>
-      <ScheduleDispatchContext.Provider value={actions}>
+    <ScheduleStateContext.Provider value={contextValue}>
+      <ScheduleDispatchContext.Provider value={dispatchValue}>
         {children}
       </ScheduleDispatchContext.Provider>
     </ScheduleStateContext.Provider>

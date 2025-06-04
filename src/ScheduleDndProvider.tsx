@@ -43,30 +43,35 @@ function createSnapModifier(): Modifier {
   };
 }
 
-const modifiers = [createSnapModifier()];
+const SNAP_MODIFIER = createSnapModifier();
+const MODIFIERS = [SNAP_MODIFIER];
+
+const SENSOR_CONFIG = {
+  activationConstraint: {
+    distance: 8,
+  },
+};
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
   const { moveSchedule } = useScheduleDispatch();
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-  );
+
+  const sensors = useSensors(useSensor(PointerSensor, SENSOR_CONFIG));
 
   const handleDragEnd = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (event: any) => {
       const { active, delta } = event;
       const { x, y } = delta;
-      const [tableId, index] = active.id.split(":");
+
+      const [tableId, indexStr] = active.id.split(":");
+      const index = Number(indexStr);
 
       const moveDayIndex = Math.floor(x / CellSize.WIDTH);
       const moveTimeIndex = Math.floor(y / CellSize.HEIGHT);
 
-      // Context의 메모이제이션된 함수 사용
-      moveSchedule(tableId, Number(index), moveDayIndex, moveTimeIndex);
+      if (moveDayIndex === 0 && moveTimeIndex === 0) return;
+
+      moveSchedule(tableId, index, moveDayIndex, moveTimeIndex);
     },
     [moveSchedule],
   );
@@ -75,7 +80,7 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
     <DndContext
       sensors={sensors}
       onDragEnd={handleDragEnd}
-      modifiers={modifiers}
+      modifiers={MODIFIERS}
     >
       {children}
     </DndContext>
