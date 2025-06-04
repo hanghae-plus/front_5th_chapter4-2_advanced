@@ -8,8 +8,27 @@ export interface Lecture {
 }
 
 export interface Schedule {
-  lecture: Lecture
+  lecture: Lecture;
   day: string;
-  range: number[]
+  range: number[];
   room?: string;
+}
+
+export interface Props {
+  searchInfo: SearchInfo | null;
+  onClose: () => void;
+}
+
+export interface SearchInfo {
+  tableId: string;
+  day?: string;
+  time?: number;
+}
+export interface SearchOption {
+  query?: string;
+  grades: number[];
+  days: string[];
+  times: number[];
+  majors: string[];
+  credits?: number;
 }
