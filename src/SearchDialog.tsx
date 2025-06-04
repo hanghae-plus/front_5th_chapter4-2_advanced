@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -129,24 +129,6 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: []
   });
 
-  // useRef로 캐시와 Promise를 관리
-  const cacheRef = useRef<{ cached: Lecture[] | null; promise: Promise<Lecture[]> | null }>({
-    cached: null,
-    promise: null,
-  });
-
-  const getLectures = useCallback(() => {
-    if (cacheRef.current.cached) return Promise.resolve(cacheRef.current.cached);
-    if (!cacheRef.current.promise) {
-      cacheRef.current.promise = fetchAllLectures().then((results) => {
-        const allLectures = results.flatMap((result) => result.data);
-        cacheRef.current.cached = allLectures;
-        return allLectures;
-      });
-    }
-    return cacheRef.current.promise;
-  }, []);
-
   const getFilteredLectures = () => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
     return lectures
@@ -221,13 +203,17 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   useEffect(() => {
     const start = performance.now();
     console.log("API 호출 시작: ", start);
-    getLectures().then((allLectures) => {
+    fetchAllLectures().then((results) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(allLectures);
+      setLectures(
+        (results as import("axios").AxiosResponse<Lecture[]>[]).flatMap(
+          (result) => result.data
+        )
+      );
     });
-  }, [getLectures]);
+  }, []);
 
   useEffect(() => {
     const $loader = loaderRef.current;
