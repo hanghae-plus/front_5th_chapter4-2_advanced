@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment, memo, useMemo } from "react";
 import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "./constants.ts";
 import { useLocalScheduleContext } from "./ScheduleContext.tsx";
-import { Schedule } from "./types.ts";
+import { DayTime, Schedule } from "./types.ts";
 import { fill2 } from "./utils.ts";
 
 // ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
@@ -40,7 +40,7 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
 });
 
 // ScheduleTableGrid memo 사용
-type ScheduleTableGridProps = { onScheduleTimeClick: ((timeInfo: { day: string; time: number }) => void) | undefined };
+type ScheduleTableGridProps = { onScheduleTimeClick: (timeInfo: DayTime) => void };
 const ScheduleTableGrid = memo(({ onScheduleTimeClick }: ScheduleTableGridProps) => {
   return (
     <Grid

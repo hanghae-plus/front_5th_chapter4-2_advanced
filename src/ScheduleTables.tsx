@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { LocalScheduleProvider, useScheduleContext } from "./ScheduleContext.tsx";
 import ScheduleTable from "./ScheduleTable.tsx";
 import SearchDialog from "./SearchDialog.tsx";
+import { DayTime } from "./types.ts";
 
 export const ScheduleTables = () => {
   const [searchInfo, setSearchInfo] = useState<{ tableId: string; day?: string; time?: number } | null>(null);
@@ -48,15 +49,19 @@ export const ScheduleTables = () => {
     [setSchedulesMap]
   );
 
-  const handleScheduleTimeClick = useCallback((tableId: string, timeInfo: { day: string; time: number }) => setSearchInfo({ tableId, ...timeInfo }), []);
-  const handleDeleteButtonClick = useCallback(
-    (tableId: string, { day, time }: { day: string; time: number }) =>
-      setSchedulesMap((prev) => ({
-        ...prev,
-        [tableId]: prev[tableId].filter((schedule) => schedule.day !== day || !schedule.range.includes(time)),
-      })),
-    [setSchedulesMap]
+  const handlers = useMemo(
+    () =>
+      scheduleTableList.map(([tableId]) => [
+        (timeInfo: DayTime) => setSearchInfo({ tableId, ...timeInfo }),
+        ({ day, time }: DayTime) =>
+          setSchedulesMap((prev) => ({
+            ...prev,
+            [tableId]: prev[tableId].filter((schedule) => schedule.day !== day || !schedule.range.includes(time)),
+          })),
+      ]),
+    [setSchedulesMap, scheduleTableList]
   );
+
   return (
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
@@ -81,8 +86,10 @@ export const ScheduleTables = () => {
             <LocalScheduleProvider
               tableId={tableId}
               schedules={schedules}
-              onScheduleTimeClick={(timeInfo) => handleScheduleTimeClick(tableId, timeInfo)}
-              onDeleteButtonClick={(timeInfo) => handleDeleteButtonClick(tableId, timeInfo)}
+              // onScheduleTimeClick={(timeInfo) => handleScheduleTimeClick(tableId, timeInfo)}
+              // onDeleteButtonClick={(timeInfo) => handleDeleteButtonClick(tableId, timeInfo)}
+              onScheduleTimeClick={handlers[index][0]}
+              onDeleteButtonClick={handlers[index][1]}
             >
               <ScheduleTable key={`schedule-table-${index}`} isActive={tableId === activeTableId} />
             </LocalScheduleProvider>
