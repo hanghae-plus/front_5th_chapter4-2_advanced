@@ -52,8 +52,6 @@ const ScheduleTable = ({
 
   const dndContext = useDndContext();
 
-  console.log("dndContext", dndContext);
-
   const getActiveTableId = () => {
     const activeId = dndContext.active?.id;
     if (activeId) {
