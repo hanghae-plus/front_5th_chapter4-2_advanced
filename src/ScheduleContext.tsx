@@ -29,6 +29,7 @@ const ScheduleDispatchContext = createContext<
       deleteSchedule: (tableId: string, day: string, time: number) => void;
       duplicateTable: (targetId: string) => void;
       removeTable: (targetId: string) => void;
+      addSchedulesToTable: (tableId: string, schedules: Schedule[]) => void;
     }
   | undefined
 >(undefined);
@@ -130,6 +131,13 @@ export const ScheduleProvider = ({ children }: PropsWithChildren) => {
           delete newState[targetId];
           return newState;
         });
+      },
+
+      addSchedulesToTable: (tableId: string, schedules: Schedule[]) => {
+        setSchedulesMap((prev) => ({
+          ...prev,
+          [tableId]: [...(prev[tableId] || []), ...schedules],
+        }));
       },
     }),
     [],

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   Button,
@@ -30,7 +36,7 @@ import {
   Wrap,
 } from "@chakra-ui/react";
 import { useScheduleDispatch } from "./ScheduleContext.tsx";
-import { ApiResponse, Lecture } from "./types.ts";
+import { ApiResponse, Lecture, Schedule } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
@@ -135,9 +141,8 @@ const fetchAllLectures = async () => {
   return Promise.all(promises);
 };
 
-// TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
-const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const setSchedulesMap = useScheduleDispatch();
+const SearchDialog = React.memo(({ searchInfo, onClose }: Props) => {
+  const { addSchedulesToTable } = useScheduleDispatch();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -151,9 +156,26 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const parseScheduleCacheRef = useRef(new WeakMap());
+
+  const memoizedLectures = useMemo(() => {
+    const cache = parseScheduleCacheRef.current;
+    return lectures.map((lecture) => {
+      if (!cache.has(lecture)) {
+        cache.set(lecture, {
+          ...lecture,
+          parsedSchedule: lecture.schedule
+            ? parseSchedule(lecture.schedule)
+            : [],
+        });
+      }
+      return cache.get(lecture);
+    });
+  }, [lectures]);
+
+  const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
-    return lectures
+    return memoizedLectures
       .filter(
         (lecture) =>
           lecture.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -169,58 +191,113 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         (lecture) => !credits || lecture.credits.startsWith(String(credits)),
       )
       .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) => days.includes(s.day));
+        if (days.length === 0) return true;
+        return lecture.parsedSchedule.some((s: Schedule) =>
+          days.includes(s.day),
+        );
       })
       .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) =>
-          s.range.some((time) => times.includes(time)),
+        if (times.length === 0) return true;
+        return lecture.parsedSchedule.some((s: Schedule) =>
+          s.range.some((time: number) => times.includes(time)),
         );
       });
-  };
+  }, [searchOptions, memoizedLectures]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map((lecture) => lecture.major))];
+  const allMajors = useMemo(
+    () => [...new Set(lectures.map((lecture) => lecture.major))],
+    [lectures],
+  );
 
-  const changeSearchOption = (
-    field: keyof SearchOption,
-    value: SearchOption[typeof field],
-  ) => {
-    setPage(1);
-    setSearchOptions({ ...searchOptions, [field]: value });
-    loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  const paginationData = useMemo(() => {
+    const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+    const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+    return { lastPage, visibleLectures };
+  }, [filteredLectures, page]);
 
-    const { tableId } = searchInfo;
+  const changeSearchOption = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      setPage(1);
+      setSearchOptions((prev) => ({ ...prev, [field]: value }));
+      loaderWrapperRef.current?.scrollTo(0, 0);
+    },
+    [],
+  );
 
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
+  const lastPageRef = useRef(paginationData.lastPage);
+  lastPageRef.current = paginationData.lastPage;
 
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    onClose();
-  };
+      const schedules = (
+        lecture.schedule ? parseSchedule(lecture.schedule) : []
+      ).map((schedule) => ({ ...schedule, lecture }));
+
+      addSchedulesToTable(searchInfo.tableId, schedules);
+      onClose();
+    },
+    [searchInfo, addSchedulesToTable, onClose],
+  );
+
+  const intersectionCallback = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting) {
+        setPage((prevPage) => {
+          const currentLastPage = Math.ceil(
+            filteredLectures.length / PAGE_SIZE,
+          );
+          return Math.min(currentLastPage, prevPage + 1);
+        });
+      }
+    },
+    [filteredLectures.length],
+  );
+
+  // 컴포넌트 memoization
+
+  const gradeCheckboxes = useMemo(
+    () =>
+      [1, 2, 3, 4].map((grade) => (
+        <Checkbox
+          key={grade}
+          value={grade}
+        >
+          {grade}학년
+        </Checkbox>
+      )),
+    [],
+  );
+
+  const dayCheckboxes = useMemo(
+    () =>
+      DAY_LABELS.map((day) => (
+        <Checkbox
+          key={day}
+          value={day}
+        >
+          {day}
+        </Checkbox>
+      )),
+    [],
+  );
+
+  const timeSlotCheckboxes = useMemo(
+    () =>
+      TIME_SLOTS.map(({ id, label }) => (
+        <Box key={id}>
+          <Checkbox
+            size="sm"
+            value={id}
+          >
+            {id}교시({label})
+          </Checkbox>
+        </Box>
+      )),
+    [],
+  );
 
   useEffect(() => {
     const start = performance.now();
@@ -238,23 +315,16 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     const $loader = loaderRef.current;
     const $loaderWrapper = loaderWrapperRef.current;
 
-    if (!$loader || !$loaderWrapper) {
-      return;
-    }
+    if (!$loader || !$loaderWrapper) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage((prevPage) => Math.min(lastPage, prevPage + 1));
-        }
-      },
-      { threshold: 0, root: $loaderWrapper },
-    );
+    const observer = new IntersectionObserver(intersectionCallback, {
+      threshold: 0,
+      root: $loaderWrapper,
+    });
 
     observer.observe($loader);
-
     return () => observer.unobserve($loader);
-  }, [lastPage]);
+  }, [intersectionCallback]);
 
   useEffect(() => {
     setSearchOptions((prev) => ({
@@ -318,16 +388,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     changeSearchOption("grades", value.map(Number))
                   }
                 >
-                  <HStack spacing={4}>
-                    {[1, 2, 3, 4].map((grade) => (
-                      <Checkbox
-                        key={grade}
-                        value={grade}
-                      >
-                        {grade}학년
-                      </Checkbox>
-                    ))}
-                  </HStack>
+                  <HStack spacing={4}>{gradeCheckboxes}</HStack>
                 </CheckboxGroup>
               </FormControl>
 
@@ -339,16 +400,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     changeSearchOption("days", value as string[])
                   }
                 >
-                  <HStack spacing={4}>
-                    {DAY_LABELS.map((day) => (
-                      <Checkbox
-                        key={day}
-                        value={day}
-                      >
-                        {day}
-                      </Checkbox>
-                    ))}
-                  </HStack>
+                  <HStack spacing={4}>{dayCheckboxes}</HStack>
                 </CheckboxGroup>
               </FormControl>
             </HStack>
@@ -397,17 +449,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     borderRadius={5}
                     p={2}
                   >
-                    {TIME_SLOTS.map(({ id, label }) => (
-                      <Box key={id}>
-                        <Checkbox
-                          key={id}
-                          size="sm"
-                          value={id}
-                        >
-                          {id}교시({label})
-                        </Checkbox>
-                      </Box>
-                    ))}
+                    {timeSlotCheckboxes}
                   </Stack>
                 </CheckboxGroup>
               </FormControl>
@@ -494,7 +536,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                   variant="striped"
                 >
                   <Tbody>
-                    {visibleLectures.map((lecture, index) => (
+                    {paginationData.visibleLectures.map((lecture, index) => (
                       <Tr key={`${lecture.id}-${index}`}>
                         <Td width="100px">{lecture.id}</Td>
                         <Td width="50px">{lecture.grade}</Td>
@@ -532,6 +574,6 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       </ModalContent>
     </Modal>
   );
-};
+});
 
 export default SearchDialog;
