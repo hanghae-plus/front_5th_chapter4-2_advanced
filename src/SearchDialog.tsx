@@ -144,6 +144,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
+  // 고유한 ID prefix 생성
+  const idPrefix = useMemo(() => `search-${searchInfo?.tableId || "default"}`, [searchInfo?.tableId]);
+
   const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
     return lectures
@@ -274,8 +277,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
           <VStack spacing={4} align="stretch">
             <HStack spacing={4}>
               <FormControl>
-                <FormLabel>검색어</FormLabel>
+                <FormLabel htmlFor={`${idPrefix}-query`}>검색어</FormLabel>
                 <Input
+                  id={`${idPrefix}-query`}
                   placeholder="과목명 또는 과목코드"
                   value={searchOptions.query}
                   onChange={e => changeSearchOption("query", e.target.value)}
@@ -283,8 +287,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>학점</FormLabel>
-                <Select value={searchOptions.credits} onChange={e => changeSearchOption("credits", e.target.value)}>
+                <FormLabel htmlFor={`${idPrefix}-credits`}>학점</FormLabel>
+                <Select
+                  id={`${idPrefix}-credits`}
+                  value={searchOptions.credits}
+                  onChange={e => changeSearchOption("credits", e.target.value)}
+                >
                   <option value="">전체</option>
                   <option value="1">1학점</option>
                   <option value="2">2학점</option>
@@ -295,14 +303,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
             <HStack spacing={4}>
               <FormControl>
-                <FormLabel>학년</FormLabel>
+                <FormLabel htmlFor={`${idPrefix}-grades`}>학년</FormLabel>
                 <CheckboxGroup
                   value={searchOptions.grades}
                   onChange={value => changeSearchOption("grades", value.map(Number))}
                 >
                   <HStack spacing={4}>
                     {[1, 2, 3, 4].map(grade => (
-                      <Checkbox key={grade} value={grade}>
+                      <Checkbox key={grade} value={grade} id={`${idPrefix}-grade-${grade}`}>
                         {grade}학년
                       </Checkbox>
                     ))}
@@ -311,14 +319,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>요일</FormLabel>
+                <FormLabel htmlFor={`${idPrefix}-days`}>요일</FormLabel>
                 <CheckboxGroup
                   value={searchOptions.days}
                   onChange={value => changeSearchOption("days", value as string[])}
                 >
                   <HStack spacing={4}>
                     {DAY_LABELS.map(day => (
-                      <Checkbox key={day} value={day}>
+                      <Checkbox key={day} value={day} id={`${idPrefix}-day-${day}`}>
                         {day}
                       </Checkbox>
                     ))}
@@ -329,7 +337,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
             <HStack spacing={4}>
               <FormControl>
-                <FormLabel>시간</FormLabel>
+                <FormLabel htmlFor={`${idPrefix}-times`}>시간</FormLabel>
                 <Wrap spacing={1} mb={2}>
                   {searchOptions.times
                     .sort((a, b) => a - b)
@@ -360,6 +368,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     <TimeSlotCheckbox
                       key={timeSlot.id}
                       timeSlot={timeSlot}
+                      idPrefix={idPrefix}
                       isChecked={searchOptions.times.includes(timeSlot.id)}
                       onToggle={handleTimeSlotToggle}
                     />
@@ -368,7 +377,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>전공</FormLabel>
+                <FormLabel htmlFor={`${idPrefix}-majors`}>전공</FormLabel>
                 <Wrap spacing={1} mb={2}>
                   {searchOptions.majors.map(major => (
                     <Tag key={major} size="sm" variant="outline" colorScheme="blue">
@@ -393,10 +402,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                   borderRadius={5}
                   p={2}
                 >
-                  {allMajors.map(major => (
+                  {allMajors.map((major, index) => (
                     <MajorCheckbox
                       key={major}
                       major={major}
+                      index={index}
+                      idPrefix={idPrefix}
                       isChecked={searchOptions.majors.includes(major)}
                       onToggle={handleMajorToggle}
                     />
