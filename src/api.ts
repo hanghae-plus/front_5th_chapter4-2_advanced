@@ -8,15 +8,15 @@ let cache: Lecture[] = [];
 let isLoaded = false;
 
 export const fetchAllLectures = async (): Promise<Lecture[]> => {
-  if (cache.length > 0) return cache;
+  if (isLoaded) return cache;
 
   // majors 먼저 가져오기
   const majors = await fetchMajors();
   cache = [...majors.data];
 
   // 백그라운드로 교양도 가져와서 병합 (await 안 함)
-  fetchLiberalArts().then((liberal) => {
-    cache = [...cache, ...liberal.data];
+  fetchLiberalArts().then((res) => {
+    cache = [...cache, ...res.data];
     isLoaded = true;
   });
 
