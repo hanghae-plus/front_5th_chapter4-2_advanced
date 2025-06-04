@@ -4,7 +4,7 @@ import { useSearchStore } from "../store/searchStore";
 import { Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleButtonGroup from "./ScheduleButtonGroup";
 import ScheduleTable from "../ScheduleTable";
-import { PublicContextDescriptor } from "@dnd-kit/core/dist/store/types";
+import { useDndContext } from "@dnd-kit/core";
 
 interface IndividualScheduleTableProps {
   tableId: string;
@@ -13,7 +13,6 @@ interface IndividualScheduleTableProps {
   setSchedulesMap: React.Dispatch<
     React.SetStateAction<Record<string, Schedule[]>>
   >;
-  dndContext: PublicContextDescriptor;
 }
 
 const IndividualScheduleTable = memo(
@@ -22,9 +21,9 @@ const IndividualScheduleTable = memo(
     schedules,
     index,
     setSchedulesMap,
-    dndContext,
   }: IndividualScheduleTableProps) => {
     const { setSearchInfo } = useSearchStore();
+    const dndContext = useDndContext();
 
     const handleScheduleTimeClick = useCallback(
       (tableId: string, timeInfo: { day: string; time: number }) => {

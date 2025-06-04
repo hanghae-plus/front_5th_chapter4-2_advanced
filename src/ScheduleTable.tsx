@@ -2,9 +2,10 @@ import { Box, Flex, Grid, GridItem, Text } from "@chakra-ui/react";
 import { CellSize, DAY_LABELS, TIMES } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2 } from "./utils.ts";
-import { Fragment, memo, useCallback, useMemo } from "react";
+import { Fragment, memo, useCallback } from "react";
 import DraggableSchedule from "./components/DraggableSchedule.tsx";
 import { PublicContextDescriptor } from "@dnd-kit/core/dist/store/types";
+import DayLabelGridItem from "./components/DayLabelGridItem.tsx";
 
 interface Props {
   tableId: string;
@@ -41,7 +42,7 @@ const ScheduleTable = memo(
       return null;
     }, [dndContext]);
 
-    const activeTableId = useMemo(() => getActiveTableId(), [getActiveTableId]);
+    const activeTableId = getActiveTableId();
 
     return (
       <Box
@@ -89,17 +90,7 @@ const ScheduleTable = memo(
                 </Flex>
               </GridItem>
               {DAY_LABELS.map((day) => (
-                <GridItem
-                  key={`${day}-${timeIndex + 2}`}
-                  borderWidth="1px 0 0 1px"
-                  borderColor="gray.300"
-                  bg={timeIndex > 17 ? "gray.100" : "white"}
-                  cursor="pointer"
-                  _hover={{ bg: "yellow.100" }}
-                  onClick={() =>
-                    onScheduleTimeClick?.({ day, time: timeIndex + 1 })
-                  }
-                />
+                <DayLabelGridItem day={day} timeIndex={timeIndex} />
               ))}
             </Fragment>
           ))}
