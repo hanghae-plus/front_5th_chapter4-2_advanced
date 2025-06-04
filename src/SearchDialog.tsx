@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Checkbox,
   CheckboxGroup,
   FormControl,
@@ -15,28 +14,23 @@ import {
   ModalOverlay,
   Select,
   Stack,
-  Table,
   Tag,
   TagCloseButton,
   TagLabel,
-  Tbody,
-  Td,
   Text,
-  Th,
-  Thead,
-  Tr,
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { Props } from "./types";
+import { Lecture, Props } from "./types";
 import { DAY_LABELS } from "./constants";
 import { TIME_SLOTS } from "./constants/constants";
 import { useSearchDialog } from "./hook/useSearchDialog";
+import { useCallback } from "react";
+import { MajorSelector } from "./MajorSelector";
+import { LectureTable } from "./LectureTable";
 
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const {
-    loaderWrapperRef,
-    loaderRef,
     searchOptions,
     filteredLectures,
     visibleLectures,
@@ -44,6 +38,20 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     changeSearchOption,
     addSchedule,
   } = useSearchDialog(searchInfo);
+
+  const handleAddSchedule = useCallback(
+    (lecture: Lecture) => {
+      addSchedule(lecture, onClose);
+    },
+    [addSchedule, onClose]
+  );
+
+  const handleMajorsChange = useCallback(
+    (majors: string[]) => {
+      changeSearchOption("majors", majors);
+    },
+    [changeSearchOption]
+  );
 
   return (
     <Modal isOpen={Boolean(searchInfo)} onClose={onClose} size="6xl">
@@ -169,104 +177,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 </CheckboxGroup>
               </FormControl>
 
-              <FormControl>
-                <FormLabel>전공</FormLabel>
-                <CheckboxGroup
-                  colorScheme="green"
-                  value={searchOptions.majors}
-                  onChange={(values) =>
-                    changeSearchOption("majors", values as string[])
-                  }
-                >
-                  <Wrap spacing={1} mb={2}>
-                    {searchOptions.majors.map((major) => (
-                      <Tag
-                        key={major}
-                        size="sm"
-                        variant="outline"
-                        colorScheme="blue"
-                      >
-                        <TagLabel>{major.split("<p>").pop()}</TagLabel>
-                        <TagCloseButton
-                          onClick={() =>
-                            changeSearchOption(
-                              "majors",
-                              searchOptions.majors.filter((v) => v !== major)
-                            )
-                          }
-                        />
-                      </Tag>
-                    ))}
-                  </Wrap>
-                  <Stack
-                    spacing={2}
-                    overflowY="auto"
-                    h="100px"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderRadius={5}
-                    p={2}
-                  >
-                    {allMajors.map((major) => (
-                      <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
-                          {major.replace(/<p>/gi, " ")}
-                        </Checkbox>
-                      </Box>
-                    ))}
-                  </Stack>
-                </CheckboxGroup>
-              </FormControl>
+              <MajorSelector
+                allMajors={allMajors}
+                selectedMajors={searchOptions.majors}
+                onMajorsChange={handleMajorsChange}
+              />
             </HStack>
-            <Text align="right">검색결과: {filteredLectures.length}개</Text>
-            <Box>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th width="100px">과목코드</Th>
-                    <Th width="50px">학년</Th>
-                    <Th width="200px">과목명</Th>
-                    <Th width="50px">학점</Th>
-                    <Th width="150px">전공</Th>
-                    <Th width="150px">시간</Th>
-                    <Th width="80px"></Th>
-                  </Tr>
-                </Thead>
-              </Table>
 
-              <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
-                <Table size="sm" variant="striped">
-                  <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture, onClose)}
-                          >
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-                <Box ref={loaderRef} h="20px" />
-              </Box>
-            </Box>
+            <Text align="right">검색결과: {filteredLectures.length}개</Text>
+
+            <LectureTable
+              lectures={visibleLectures}
+              onAddSchedule={handleAddSchedule}
+            />
           </VStack>
         </ModalBody>
       </ModalContent>
