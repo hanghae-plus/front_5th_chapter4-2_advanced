@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Grid, GridItem, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverTrigger, Text } from "@chakra-ui/react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment, memo, useMemo } from "react";
+import { ComponentProps, Fragment, memo, useCallback, useMemo, useState } from "react";
 import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "./constants.ts";
 import { useLocalScheduleContext } from "./ScheduleContext.tsx";
 import { DayTime, Schedule } from "./types.ts";
@@ -26,7 +26,7 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
         id={`${tableId}:${index}`}
         data={schedule}
         bg={colorMap[schedule.lecture.id]}
-        onDeleteButtonClick={() => onDeleteButtonClick?.({ day: schedule.day, time: schedule.range[0] })}
+        onDeleteButtonClick={() => onDeleteButtonClick({ day: schedule.day, time: schedule.range[0] })}
       />
     ));
   }, [schedules, tableId, colorMap, onDeleteButtonClick]);
@@ -101,30 +101,46 @@ const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick }: Draggable
   const topIndex = range[0] - 1;
   const size = range.length;
 
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsEnabled(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsEnabled(false);
+  }, []);
+
+  const Item = (
+    <Box
+      position="absolute"
+      left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
+      top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
+      width={CellSize.WIDTH - 1 + "px"}
+      height={CellSize.HEIGHT * size - 1 + "px"}
+      bg={bg}
+      p={1}
+      boxSizing="border-box"
+      cursor="pointer"
+      ref={setNodeRef}
+      transform={CSS.Translate.toString(transform)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      {...listeners}
+      {...attributes}
+    >
+      <Text fontSize="sm" fontWeight="bold">
+        {lecture.title}
+      </Text>
+      <Text fontSize="xs">{room}</Text>
+    </Box>
+  );
+
+  if (!isEnabled) return Item;
+
   return (
     <Popover>
-      <PopoverTrigger>
-        <Box
-          position="absolute"
-          left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-          top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-          width={CellSize.WIDTH - 1 + "px"}
-          height={CellSize.HEIGHT * size - 1 + "px"}
-          bg={bg}
-          p={1}
-          boxSizing="border-box"
-          cursor="pointer"
-          ref={setNodeRef}
-          transform={CSS.Translate.toString(transform)}
-          {...listeners}
-          {...attributes}
-        >
-          <Text fontSize="sm" fontWeight="bold">
-            {lecture.title}
-          </Text>
-          <Text fontSize="xs">{room}</Text>
-        </Box>
-      </PopoverTrigger>
+      <PopoverTrigger>{Item}</PopoverTrigger>
       <PopoverContent onClick={(event) => event.stopPropagation()}>
         <PopoverArrow />
         <PopoverCloseButton />

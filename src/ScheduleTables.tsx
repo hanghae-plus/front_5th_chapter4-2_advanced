@@ -49,6 +49,7 @@ export const ScheduleTables = () => {
     [setSchedulesMap]
   );
 
+  // 각각의 table 별 handler를 미리 선언해 다른 테이블에 영향이 없도록 수정
   const handlers = useMemo(
     () =>
       scheduleTableList.map(([tableId]) => [
@@ -83,11 +84,9 @@ export const ScheduleTables = () => {
                 </Button>
               </ButtonGroup>
             </Flex>
-            <LocalScheduleProvider
+            <LocalScheduleProvider // table 별 Local Context API 로 재할당
               tableId={tableId}
               schedules={schedules}
-              // onScheduleTimeClick={(timeInfo) => handleScheduleTimeClick(tableId, timeInfo)}
-              // onDeleteButtonClick={(timeInfo) => handleDeleteButtonClick(tableId, timeInfo)}
               onScheduleTimeClick={handlers[index][0]}
               onDeleteButtonClick={handlers[index][1]}
             >
