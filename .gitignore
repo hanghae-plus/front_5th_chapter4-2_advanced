@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 memo.md
+*pnpm-lock.yaml
+pnpm-lock.yaml
+*-lock.json
+*-lock.yaml
