@@ -1,6 +1,6 @@
 // LectureRow.tsx
 import { Tr, Td, Button } from '@chakra-ui/react';
-import { Lecture } from './types';
+import { Lecture } from '../types';
 import { memo } from 'react';
 
 interface Props {

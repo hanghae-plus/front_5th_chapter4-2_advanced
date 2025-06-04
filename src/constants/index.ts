@@ -1,3 +1,5 @@
+import { parseHnM } from '../utils/utils.ts';
+
 export const DAY_LABELS = ['월', '화', '수', '목', '금', '토'] as const;
 
 export const CellSize = {
@@ -36,3 +38,15 @@ export const TIME_SLOTS = [
 ];
 
 export const PAGE_SIZE = 100;
+
+export const TIMES = [
+  ...Array(18)
+    .fill(0)
+    .map((v, k) => v + k * 30 * 분)
+    .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
+
+  ...Array(6)
+    .fill(18 * 30 * 분)
+    .map((v, k) => v + k * 55 * 분)
+    .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
+] as const;

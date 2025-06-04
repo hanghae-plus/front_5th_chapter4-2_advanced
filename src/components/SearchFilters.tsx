@@ -13,9 +13,9 @@ import {
   TagLabel,
   Wrap,
 } from '@chakra-ui/react';
-import { DAY_LABELS, TIME_SLOTS } from './constants.ts';
+import { DAY_LABELS, TIME_SLOTS } from '../constants';
 import { memo } from 'react';
-import { SearchOption } from './types.ts';
+import { SearchOption } from '../types';
 
 interface Props {
   searchOptions: SearchOption;

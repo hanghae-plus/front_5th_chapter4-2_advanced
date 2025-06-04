@@ -9,9 +9,9 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import { useState, useCallback } from 'react';
-import { CellSize, DAY_LABELS } from './constants.ts';
+import { CellSize, DAY_LABELS } from '../constants';
 import { useScheduleState, useScheduleActions } from './ScheduleContext.tsx';
-import { Schedule } from './types.ts';
+import { Schedule } from '../types';
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {

@@ -1,6 +1,6 @@
 import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
-import { Schedule } from './types.ts';
-import dummyScheduleMap from './dummyScheduleMap.ts';
+import { Schedule } from '../types';
+import dummyScheduleMap from '../data/dummyScheduleMap.ts';
 
 // 상태만 관리하는 Context
 const ScheduleStateContext = createContext<Record<string, Schedule[]> | undefined>(undefined);

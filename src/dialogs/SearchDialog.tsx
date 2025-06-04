@@ -15,13 +15,13 @@ import {
   Thead,
   VStack,
 } from '@chakra-ui/react';
-import { useScheduleActions } from './ScheduleContext.tsx';
-import { Lecture, SearchOption } from './types.ts';
-import { parseSchedule } from './utils.ts';
-import { fetchAllLectures } from './api.ts';
-import LectureRow from './LectureRow.tsx';
-import SearchFilters from './SearchFilters.tsx';
-import { PAGE_SIZE } from './constants.ts';
+import { useScheduleActions } from '../context/ScheduleContext.tsx';
+import { Lecture, SearchOption } from '../types';
+import { parseSchedule } from '../utils/utils.ts';
+import { fetchAllLectures } from '../api/lectures.ts';
+import LectureRow from '../components/LectureRow.tsx';
+import SearchFilters from '../components/SearchFilters.tsx';
+import { PAGE_SIZE } from '../constants';
 
 interface Props {
   searchInfo: {
