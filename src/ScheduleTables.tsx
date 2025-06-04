@@ -63,6 +63,7 @@ export const ScheduleTables = () => {
     [setSchedulesMap, scheduleTableList]
   );
 
+  // <Stack key={tableId} width="600px"> 까지 감싸서 memo하면 큰 테이블도 리랜더링 막을 수 있을 듯
   return (
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
