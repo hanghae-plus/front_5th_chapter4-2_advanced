@@ -256,7 +256,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </Table>
 
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
-                <FixedVisibleLectures visibleLectures={visibleLectures} addSchedule={addSchedule} />
+                <VisibleLectureTable visibleLectures={visibleLectures} addSchedule={addSchedule} />
                 <Box ref={loaderRef} h="20px" />
               </Box>
             </Box>
@@ -380,13 +380,13 @@ const MajorsCheckbox = memo(({ searchOptions, changeSearchOption, allMajors }: D
             </Tag>
           ))}
         </Wrap>
-        <FixedMajorsCheckbox allMajors={allMajors} />
+        <AllMajorsCheckbox allMajors={allMajors} />
       </CheckboxGroup>
     </FormControl>
   );
 });
 
-const FixedMajorsCheckbox = memo(({ allMajors }: { allMajors: string[] }) => {
+const AllMajorsCheckbox = memo(({ allMajors }: { allMajors: string[] }) => {
   return (
     <Stack spacing={2} overflowY="auto" h="100px" border="1px solid" borderColor="gray.200" borderRadius={5} p={2}>
       {allMajors.map((major) => (
@@ -400,7 +400,7 @@ const FixedMajorsCheckbox = memo(({ allMajors }: { allMajors: string[] }) => {
   );
 });
 
-const FixedVisibleLectures = memo(({ visibleLectures, addSchedule }: { visibleLectures: Lecture[]; addSchedule: (lecture: Lecture) => void }) => {
+const VisibleLectureTable = memo(({ visibleLectures, addSchedule }: { visibleLectures: Lecture[]; addSchedule: (lecture: Lecture) => void }) => {
   return (
     <Table size="sm" variant="striped">
       <Tbody>
