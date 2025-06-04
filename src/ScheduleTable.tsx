@@ -1,11 +1,10 @@
 import { Box, Flex, Grid, GridItem, Text } from "@chakra-ui/react";
-import { CellSize, DAY_LABELS, TIMES } from "./constants.ts";
+import { CellSize, COLORS, DAY_LABELS, TIMES } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2 } from "./utils.ts";
 import { Fragment, memo, useCallback } from "react";
 import DraggableSchedule from "./components/DraggableSchedule.tsx";
 import { PublicContextDescriptor } from "@dnd-kit/core/dist/store/types";
-import DayLabelGridItem from "./components/DayLabelGridItem.tsx";
 
 interface Props {
   tableId: string;
@@ -28,8 +27,7 @@ const ScheduleTable = memo(
         const lectures = [
           ...new Set(schedules.map(({ lecture }) => lecture.id)),
         ];
-        const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-        return colors[lectures.indexOf(lectureId) % colors.length];
+        return COLORS[lectures.indexOf(lectureId) % COLORS.length];
       },
       [schedules]
     );
@@ -43,6 +41,59 @@ const ScheduleTable = memo(
     }, [dndContext]);
 
     const activeTableId = getActiveTableId();
+
+    const DayLabelGridItem = memo(({ day }: { day: string }) => {
+      return (
+        <GridItem borderLeft="1px" borderColor="gray.300" bg="gray.100">
+          <Flex justifyContent="center" alignItems="center" h="full">
+            <Text fontWeight="bold">{day}</Text>
+          </Flex>
+        </GridItem>
+      );
+    });
+
+    const TimeDayLabelGridItem = memo(
+      ({ day, timeIndex }: { day: string; timeIndex: number }) => {
+        return (
+          <GridItem
+            key={`${day}-${timeIndex + 2}`}
+            borderWidth="1px 0 0 1px"
+            borderColor="gray.300"
+            bg={timeIndex > 17 ? "gray.100" : "white"}
+            cursor="pointer"
+            _hover={{ bg: "yellow.100" }}
+            onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
+          />
+        );
+      }
+    );
+
+    const TimeLabelGridItem = memo(
+      ({ time, timeIndex }: { time: string; timeIndex: number }) => {
+        return (
+          <Fragment>
+            <GridItem
+              borderTop="1px solid"
+              borderColor="gray.300"
+              bg={timeIndex > 17 ? "gray.200" : "gray.100"}
+            >
+              <Flex justifyContent="center" alignItems="center" h="full">
+                <Text fontSize="xs">
+                  {fill2(timeIndex + 1)} ({time})
+                </Text>
+              </Flex>
+            </GridItem>
+            {DAY_LABELS.map((day) => (
+              <TimeDayLabelGridItem
+                day={day}
+                timeIndex={timeIndex}
+                key={`${day}-${timeIndex + 2}`}
+              />
+            ))}
+          </Fragment>
+        );
+      }
+    );
 
     return (
       <Box
@@ -65,34 +116,14 @@ const ScheduleTable = memo(
             </Flex>
           </GridItem>
           {DAY_LABELS.map((day) => (
-            <GridItem
-              key={day}
-              borderLeft="1px"
-              borderColor="gray.300"
-              bg="gray.100"
-            >
-              <Flex justifyContent="center" alignItems="center" h="full">
-                <Text fontWeight="bold">{day}</Text>
-              </Flex>
-            </GridItem>
+            <DayLabelGridItem day={day} key={day} />
           ))}
           {TIMES.map((time, timeIndex) => (
-            <Fragment key={`시간-${timeIndex + 1}`}>
-              <GridItem
-                borderTop="1px solid"
-                borderColor="gray.300"
-                bg={timeIndex > 17 ? "gray.200" : "gray.100"}
-              >
-                <Flex justifyContent="center" alignItems="center" h="full">
-                  <Text fontSize="xs">
-                    {fill2(timeIndex + 1)} ({time})
-                  </Text>
-                </Flex>
-              </GridItem>
-              {DAY_LABELS.map((day) => (
-                <DayLabelGridItem day={day} timeIndex={timeIndex} />
-              ))}
-            </Fragment>
+            <TimeLabelGridItem
+              time={time}
+              timeIndex={timeIndex}
+              key={timeIndex + 1}
+            />
           ))}
         </Grid>
 

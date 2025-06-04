@@ -51,3 +51,5 @@ export const TIME_SLOTS = [
 ];
 
 export const PAGE_SIZE = 100;
+
+export const COLORS = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"] as const;
