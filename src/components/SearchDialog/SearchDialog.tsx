@@ -199,7 +199,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(results.flatMap((result) => result.data));
+
+      const validResults = results.filter((result) => result !== null);
+      setLectures(validResults.flatMap((result) => result.data));
     });
   }, []);
 
