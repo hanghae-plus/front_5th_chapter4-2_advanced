@@ -30,9 +30,9 @@ import {
   Wrap,
 } from "@chakra-ui/react";
 import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
+import { ApiResponse, Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
 
 interface Props {
@@ -82,8 +82,8 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const memoizedFetching = (fn: () => Promise<AxiosResponse<Lecture[]>>) => {
-  const cache = new Map<string, Promise<AxiosResponse<Lecture[]>>>();
+const memoizedFetching = (fn: () => Promise<ApiResponse<Lecture[]>>) => {
+  const cache = new Map<string, Promise<ApiResponse<Lecture[]>>>();
 
   return () => {
     const key = fn.name || "default";
@@ -110,19 +110,30 @@ const fetchLiberalArts = () =>
 const cachedFetchMajors = memoizedFetching(fetchMajors);
 const cachedFetchLiberalArts = memoizedFetching(fetchLiberalArts);
 
-// TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
-const fetchAllLectures = async () =>
-  await Promise.all([
-    (console.log("API Call 1", performance.now()), await cachedFetchMajors()),
-    (console.log("API Call 2", performance.now()),
-    await cachedFetchLiberalArts()),
-    (console.log("API Call 3", performance.now()), await cachedFetchMajors()),
-    (console.log("API Call 4", performance.now()),
-    await cachedFetchLiberalArts()),
-    (console.log("API Call 5", performance.now()), await cachedFetchMajors()),
-    (console.log("API Call 6", performance.now()),
-    await cachedFetchLiberalArts()),
-  ]);
+const loggingAsync = (
+  fn: () => Promise<ApiResponse<Lecture[]>>,
+  index: number,
+): Promise<ApiResponse<Lecture[]>> => {
+  return fn().then((result) => {
+    console.log(`API Call ${index}`, performance.now());
+    return result;
+  });
+};
+
+const fetchAllLectures = async () => {
+  console.log("API 병렬 호출 시작", performance.now());
+
+  const promises = [
+    loggingAsync(cachedFetchMajors, 1),
+    loggingAsync(cachedFetchLiberalArts, 2),
+    loggingAsync(cachedFetchMajors, 3),
+    loggingAsync(cachedFetchLiberalArts, 4),
+    loggingAsync(cachedFetchMajors, 5),
+    loggingAsync(cachedFetchLiberalArts, 6),
+  ];
+
+  return Promise.all(promises);
+};
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -215,6 +226,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     const start = performance.now();
     console.log("API 호출 시작: ", start);
     fetchAllLectures().then((results) => {
+      console.log(results);
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
