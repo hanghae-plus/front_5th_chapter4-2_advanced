@@ -13,7 +13,7 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { DAY_LABELS } from "../../constants.ts";
+import { DAY_LABELS } from "../../data/constants";
 import { MajorCheckbox, TimeSlotCheckbox } from "./index";
 import SearchInput from "./SearchInput";
 

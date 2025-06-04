@@ -1,10 +1,19 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, VStack } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
-import { parseSchedule } from "./utils.ts";
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+  VStack,
+  Text,
+} from "@chakra-ui/react";
+import { useScheduleStore } from "../../stores/scheduleStore";
+import { Lecture } from "../../types";
+import { parseSchedule } from "../../lib/utils";
 import axios from "axios";
-import { SearchForm, LectureTable } from "./components";
+import { SearchForm, LectureTable } from "./index";
 
 interface Props {
   searchInfo: {
@@ -26,16 +35,13 @@ interface SearchOption {
 
 const PAGE_SIZE = 100;
 
-/**
- * API 호출 결과를 캐시
- */
+// API 캐싱을 위한 클로저 팩토리
 const createApiCache = () => {
   const cache = new Map<string, Promise<import("axios").AxiosResponse<Lecture[]>>>();
 
   return {
     fetchMajors: (): Promise<import("axios").AxiosResponse<Lecture[]>> => {
       if (!cache.has("majors")) {
-        console.log("API Call - fetchMajors", performance.now());
         cache.set("majors", axios.get<Lecture[]>("/schedules-majors.json"));
       }
       return cache.get("majors")!;
@@ -43,7 +49,6 @@ const createApiCache = () => {
 
     fetchLiberalArts: (): Promise<import("axios").AxiosResponse<Lecture[]>> => {
       if (!cache.has("liberalArts")) {
-        console.log("API Call - fetchLiberalArts", performance.now());
         cache.set("liberalArts", axios.get<Lecture[]>("/schedules-liberal-arts.json"));
       }
       return cache.get("liberalArts")!;
@@ -55,22 +60,15 @@ const apiCache = createApiCache();
 
 // Promise.all을 정상적으로 병렬 실행하도록 수정
 const fetchAllLectures = async () => {
-  const start = performance.now();
-  console.log("API 호출 시작: ", start);
-
   const results = await Promise.all([apiCache.fetchMajors(), apiCache.fetchLiberalArts()]);
-
-  const end = performance.now();
-  console.log("모든 API 호출 완료: ", end);
-  console.log("API 호출에 걸린 시간(ms): ", end - start);
-
   return results;
 };
 
-const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const { setSchedulesMap } = useScheduleContext();
+export const SearchDialog = ({ searchInfo, onClose }: Props) => {
+  const { addMultipleSchedules } = useScheduleStore();
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
     query: "",
@@ -148,14 +146,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         lecture,
       }));
 
-      setSchedulesMap(prev => ({
-        ...prev,
-        [tableId]: [...prev[tableId], ...schedules],
-      }));
+      // 한 번에 모든 스케줄 추가 - 성능 최적화
+      addMultipleSchedules(tableId, schedules);
 
       handleClose();
     },
-    [searchInfo, setSchedulesMap, handleClose]
+    [searchInfo, addMultipleSchedules, handleClose]
   );
 
   // 전공 체크박스 토글 핸들러
@@ -178,24 +174,41 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   // API 호출 최적화 - 모달이 열릴 때만, 그리고 데이터가 없을 때만 호출
   useEffect(() => {
-    if (!searchInfo || lectures.length > 0) return;
+    if (!searchInfo) return;
 
-    fetchAllLectures().then(results => {
-      setLectures(results.flatMap(result => result.data));
-    });
-  }, [searchInfo, lectures.length]);
-
-  // searchInfo 변경 시 초기 필터 설정
-  useEffect(() => {
-    if (searchInfo) {
+    // 데이터가 이미 있으면 초기 필터만 설정하고 API 호출하지 않음
+    if (lectures.length > 0) {
+      // 데이터가 이미 있을 때 초기 필터 설정
       setSearchOptions(prev => ({
         ...prev,
-        days: searchInfo.day ? [searchInfo.day] : prev.days,
-        times: searchInfo.time ? [searchInfo.time] : prev.times,
+        days: searchInfo.day ? [searchInfo.day] : [],
+        times: searchInfo.time ? [searchInfo.time] : [],
       }));
       setPage(1);
+      return;
     }
-  }, [searchInfo]);
+
+    setIsLoading(true);
+    fetchAllLectures()
+      .then(results => {
+        const allLectures = results.flatMap(result => result.data);
+        setLectures(allLectures);
+
+        // API 호출 완료 후 초기 필터 설정
+        setSearchOptions(prev => ({
+          ...prev,
+          days: searchInfo.day ? [searchInfo.day] : [],
+          times: searchInfo.time ? [searchInfo.time] : [],
+        }));
+        setPage(1);
+      })
+      .catch(() => {
+        // 에러 처리
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [lectures.length, searchInfo]);
 
   return (
     <Modal isOpen={Boolean(searchInfo)} onClose={handleClose} size="6xl">
@@ -214,18 +227,22 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               onTimeSlotToggle={handleTimeSlotToggle}
             />
 
-            <LectureTable
-              visibleLectures={visibleLectures}
-              filteredLecturesCount={filteredLectures.length}
-              onAddSchedule={addSchedule}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-            />
+            {isLoading ? (
+              <Text textAlign="center" py={8}>
+                강의 목록을 불러오는 중...
+              </Text>
+            ) : (
+              <LectureTable
+                visibleLectures={visibleLectures}
+                filteredLecturesCount={filteredLectures.length}
+                onAddSchedule={addSchedule}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMore}
+              />
+            )}
           </VStack>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
 };
-
-export default SearchDialog;

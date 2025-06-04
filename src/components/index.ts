@@ -1,5 +1,8 @@
-export { SearchForm, LectureTable } from "./search";
+// Search related components
+export * from "./search";
 
-// 다른 기능들의 컴포넌트들이 여기에 추가될 예정
-// export { SomeComponent } from "./schedule";
-// export { AnotherComponent } from "./common";
+// Schedule related components
+export * from "./schedule";
+
+// Drag and Drop related components
+export * from "./dnd";
