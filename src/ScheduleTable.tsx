@@ -21,7 +21,7 @@ import { ComponentProps, Fragment, memo, useMemo } from 'react';
 
 interface Props {
   tableId: string;
-  activeTableId?: string;
+  activeTableId: string | null;
   schedules: Schedule[];
   onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;

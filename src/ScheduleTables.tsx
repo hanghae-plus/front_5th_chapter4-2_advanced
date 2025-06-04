@@ -5,7 +5,7 @@ import SearchDialog from './SearchDialog.tsx';
 import { useState } from 'react';
 
 interface ScheduleTablesProps {
-  activeTableId?: string;
+  activeTableId: string | null;
 }
 
 export const ScheduleTables = ({ activeTableId }: ScheduleTablesProps) => {
