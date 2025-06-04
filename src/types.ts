@@ -13,3 +13,5 @@ export interface Schedule {
   range: number[];
   room?: string;
 }
+
+export type DayTime = { day: string; time: number };

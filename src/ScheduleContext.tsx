@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, PropsWithChildren, useContext, useMemo, useState } from "react";
 import dummyScheduleMap from "./dummyScheduleMap.ts";
-import { Schedule } from "./types.ts";
+import { DayTime, Schedule } from "./types.ts";
 
 interface ScheduleContextType {
   schedulesMap: Record<string, Schedule[]>;
@@ -28,11 +28,11 @@ export const ScheduleProvider = ({ children }: PropsWithChildren) => {
 type LocalScheduleContextType = {
   tableId: string;
   schedules: Schedule[];
-  onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
-  onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
+  onScheduleTimeClick: (timeInfo: DayTime) => void;
+  onDeleteButtonClick: (timeInfo: DayTime) => void;
 };
 
-const LocalScheduleContext = createContext<LocalScheduleContextType>({ tableId: "", schedules: [] });
+const LocalScheduleContext = createContext<LocalScheduleContextType>({ tableId: "", schedules: [], onScheduleTimeClick: () => {}, onDeleteButtonClick: () => {} });
 
 export const LocalScheduleProvider = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick, children }: PropsWithChildren<LocalScheduleContextType>) => {
   const contextValue = useMemo(
