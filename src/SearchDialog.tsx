@@ -26,7 +26,7 @@ import SearchGradesControl from './search/SearchGradesControl.tsx';
 import SearchDaysControl from './search/SearchDaysControl.tsx';
 import SearchTimesControl from './search/SearchTimesControl.tsx';
 import SearchMajorsControl from './search/SearchMajorsControl.tsx';
-import LectureList from './LectureList';
+import LectureTr from './LectureTr.tsx';
 
 interface Props {
   searchInfo: {
@@ -138,7 +138,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       });
   }, [searchOptions, lectures]);
 
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+  const lastPage = useMemo(
+    () => Math.ceil(filteredLectures.length / PAGE_SIZE),
+    [filteredLectures]
+  );
   const visibleLectures = useMemo(
     () => filteredLectures.slice(0, page * PAGE_SIZE),
     [filteredLectures, page]
@@ -215,44 +218,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     setPage(1);
   }, [searchInfo]);
 
-  const handleQueryChange = useCallback(
-    (query: string) => {
-      changeSearchOption('query', query);
-    },
-    [changeSearchOption]
-  );
-
-  const handleCreditsChange = useCallback(
-    (credits: number) => {
-      changeSearchOption('credits', credits);
-    },
-    [changeSearchOption]
-  );
-
-  const handleGradesChange = useCallback(
-    (grades: number[]) => {
-      changeSearchOption('grades', grades);
-    },
-    [changeSearchOption]
-  );
-
-  const handleDaysChange = useCallback(
-    (days: string[]) => {
-      changeSearchOption('days', days);
-    },
-    [changeSearchOption]
-  );
-
-  const handleTimesChange = useCallback(
-    (times: number[]) => {
-      changeSearchOption('times', times);
-    },
-    [changeSearchOption]
-  );
-
-  const handleMajorsChange = useCallback(
-    (majors: string[]) => {
-      changeSearchOption('majors', majors);
+  const handleDataChange = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      changeSearchOption(field, value);
     },
     [changeSearchOption]
   );
@@ -266,30 +234,39 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         <ModalBody>
           <VStack spacing={4} align="stretch">
             <HStack spacing={4}>
-              <SearchQueryControl query={searchOptions.query} onChange={handleQueryChange} />
+              <SearchQueryControl
+                query={searchOptions.query}
+                onChange={(data) => handleDataChange('query', data)}
+              />
 
               <SearchCreditsControl
                 credits={searchOptions.credits}
-                onChange={handleCreditsChange}
+                onChange={(data) => handleDataChange('credits', data)}
               />
             </HStack>
 
             <HStack spacing={4}>
-              <SearchGradesControl grades={searchOptions.grades} onChange={handleGradesChange} />
+              <SearchGradesControl
+                grades={searchOptions.grades}
+                onChange={(data) => handleDataChange('grades', data)}
+              />
 
-              <SearchDaysControl days={searchOptions.days} onChange={handleDaysChange} />
+              <SearchDaysControl
+                days={searchOptions.days}
+                onChange={(data) => handleDataChange('days', data)}
+              />
             </HStack>
 
             <HStack spacing={4}>
               <SearchTimesControl
                 times={searchOptions.times}
-                onChange={handleTimesChange}
+                onChange={(data) => handleDataChange('times', data)}
                 changeSearchOption={changeSearchOption}
               />
 
               <SearchMajorsControl
                 majors={searchOptions.majors}
-                onChange={handleMajorsChange}
+                onChange={(data) => handleDataChange('majors', data)}
                 changeSearchOption={changeSearchOption}
                 allMajors={allMajors}
               />
@@ -313,7 +290,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
                 <Table size="sm" variant="striped">
                   <Tbody>
-                    <LectureList lectures={visibleLectures} onAdd={addSchedule} />
+                    {visibleLectures.map((lecture, index) => (
+                      <LectureTr
+                        key={`${lecture.id}-${index}`}
+                        lecture={lecture}
+                        index={index}
+                        onAdd={addSchedule}
+                      />
+                    ))}
                   </Tbody>
                 </Table>
                 <Box ref={loaderRef} h="20px" />
