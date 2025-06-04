@@ -28,6 +28,7 @@ import {
   Wrap,
 } from "@chakra-ui/react";
 import CreditSelect from "./CreditSelect";
+import GradeSelect from "./GradeSelect";
 import MajorFilter from "./MajorFilter";
 import SearchInput from "./SearchInput";
 import { useScheduleContext } from "@/ScheduleContext.tsx";
@@ -260,24 +261,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
             </HStack>
 
             <HStack spacing={4}>
-              <FormControl>
-                <FormLabel>학년</FormLabel>
-                <CheckboxGroup
-                  value={searchOptions.grades}
-                  onChange={(value) =>
-                    changeSearchOption("grades", value.map(Number))
-                  }>
-                  <HStack spacing={4}>
-                    {[1, 2, 3, 4].map((grade) => (
-                      <Checkbox
-                        key={grade}
-                        value={grade}>
-                        {grade}학년
-                      </Checkbox>
-                    ))}
-                  </HStack>
-                </CheckboxGroup>
-              </FormControl>
+              <GradeSelect
+                grades={searchOptions.grades}
+                changeSearchOption={changeSearchOption}
+              />
 
               <FormControl>
                 <FormLabel>요일</FormLabel>
