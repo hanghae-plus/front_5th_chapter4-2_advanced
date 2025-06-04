@@ -82,9 +82,25 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
-const fetchLiberalArts = () =>
-  axios.get<Lecture[]>("/schedules-liberal-arts.json");
+const fetchMajors = (() => {
+  let promise: ReturnType<typeof axios.get> | null = null;
+  return () => {
+    if (!promise) {
+      promise = axios.get<Lecture[]>("/schedules-majors.json");
+    }
+    return promise;
+  };
+})();
+
+const fetchLiberalArts = (() => {
+  let promise: ReturnType<typeof axios.get> | null = null;
+  return () => {
+    if (!promise) {
+      promise = axios.get<Lecture[]>("/schedules-liberal-arts.json");
+    }
+    return promise;
+  };
+})();
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 const fetchAllLectures = async () =>
@@ -191,7 +207,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(results.flatMap((result) => result.data));
+      setLectures(
+        (results as import("axios").AxiosResponse<Lecture[]>[]).flatMap(
+          (result) => result.data
+        )
+      );
     });
   }, []);
 
