@@ -29,26 +29,20 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
+import { Lecture, Schedule, SearchOption } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import { DAY_LABELS, PAGE_SIZE, TIME_SLOTS } from "./constants.ts";
 import { getFetchAllLectures } from "./api/apis.ts";
 import { useSearchStore } from "./store/searchStore.ts";
 
-interface SearchOption {
-  query?: string;
-  grades: number[];
-  days: string[];
-  times: number[];
-  majors: string[];
-  credits?: number;
+interface SearchDialogProps {
+  setSchedulesMap: React.Dispatch<
+    React.SetStateAction<Record<string, Schedule[]>>
+  >;
 }
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
-const SearchDialog = memo(() => {
-  const { setSchedulesMap } = useScheduleContext();
-
+const SearchDialog = memo(({ setSchedulesMap }: SearchDialogProps) => {
   const { searchInfo, resetSearchInfo } = useSearchStore();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);

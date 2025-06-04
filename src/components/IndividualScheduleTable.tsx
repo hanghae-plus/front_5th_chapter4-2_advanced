@@ -4,6 +4,7 @@ import { useSearchStore } from "../store/searchStore";
 import { Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleButtonGroup from "./ScheduleButtonGroup";
 import ScheduleTable from "../ScheduleTable";
+import { PublicContextDescriptor } from "@dnd-kit/core/dist/store/types";
 
 interface IndividualScheduleTableProps {
   tableId: string;
@@ -12,6 +13,7 @@ interface IndividualScheduleTableProps {
   setSchedulesMap: React.Dispatch<
     React.SetStateAction<Record<string, Schedule[]>>
   >;
+  dndContext: PublicContextDescriptor;
 }
 
 const IndividualScheduleTable = memo(
@@ -20,6 +22,7 @@ const IndividualScheduleTable = memo(
     schedules,
     index,
     setSchedulesMap,
+    dndContext,
   }: IndividualScheduleTableProps) => {
     const { setSearchInfo } = useSearchStore();
 
@@ -64,6 +67,7 @@ const IndividualScheduleTable = memo(
           onDeleteButtonClick={({ day, time }) =>
             handleScheduleDeleteClick(tableId, { day, time })
           }
+          dndContext={dndContext}
         />
       </Stack>
     );

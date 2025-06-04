@@ -2,36 +2,46 @@ import { Box, Flex, Grid, GridItem, Text } from "@chakra-ui/react";
 import { CellSize, DAY_LABELS, TIMES } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2 } from "./utils.ts";
-import { useDndContext } from "@dnd-kit/core";
-import { Fragment, memo } from "react";
+import { Fragment, memo, useCallback, useMemo } from "react";
 import DraggableSchedule from "./components/DraggableSchedule.tsx";
+import { PublicContextDescriptor } from "@dnd-kit/core/dist/store/types";
 
 interface Props {
   tableId: string;
   schedules: Schedule[];
   onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
+  dndContext: PublicContextDescriptor;
 }
 
 const ScheduleTable = memo(
-  ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const getColor = (lectureId: string): string => {
-      const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-      const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-      return colors[lectures.indexOf(lectureId) % colors.length];
-    };
+  ({
+    tableId,
+    schedules,
+    onScheduleTimeClick,
+    onDeleteButtonClick,
+    dndContext,
+  }: Props) => {
+    const getColor = useCallback(
+      (lectureId: string): string => {
+        const lectures = [
+          ...new Set(schedules.map(({ lecture }) => lecture.id)),
+        ];
+        const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
+        return colors[lectures.indexOf(lectureId) % colors.length];
+      },
+      [schedules]
+    );
 
-    const dndContext = useDndContext();
-
-    const getActiveTableId = () => {
+    const getActiveTableId = useCallback(() => {
       const activeId = dndContext.active?.id;
       if (activeId) {
         return String(activeId).split(":")[0];
       }
       return null;
-    };
+    }, [dndContext]);
 
-    const activeTableId = getActiveTableId();
+    const activeTableId = useMemo(() => getActiveTableId(), [getActiveTableId]);
 
     return (
       <Box
