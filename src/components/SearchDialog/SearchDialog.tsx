@@ -27,7 +27,7 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import GradeSelect from "./GradeSelect";
+import CreditSelect from "./CreditSelect";
 import MajorFilter from "./MajorFilter";
 import SearchInput from "./SearchInput";
 import { useScheduleContext } from "@/ScheduleContext.tsx";
@@ -253,7 +253,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 query={searchOptions.query}
                 changeSearchOption={changeSearchOption}
               />
-              <GradeSelect
+              <CreditSelect
                 credits={searchOptions.credits}
                 changeSearchOption={changeSearchOption}
               />

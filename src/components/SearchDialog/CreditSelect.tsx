@@ -2,7 +2,7 @@ import { memo } from "react";
 import { FormControl, FormLabel, Select } from "@chakra-ui/react";
 import type { SearchOption } from "@/types";
 
-interface GradeSelectProps {
+interface CreditSelectProps {
   credits: SearchOption["credits"];
   changeSearchOption: (
     field: keyof SearchOption,
@@ -10,7 +10,7 @@ interface GradeSelectProps {
   ) => void;
 }
 
-const GradeSelect = ({ credits, changeSearchOption }: GradeSelectProps) => {
+const CreditSelect = ({ credits, changeSearchOption }: CreditSelectProps) => {
   return (
     <FormControl>
       <FormLabel>학점</FormLabel>
@@ -26,4 +26,4 @@ const GradeSelect = ({ credits, changeSearchOption }: GradeSelectProps) => {
   );
 };
 
-export default memo(GradeSelect);
+export default memo(CreditSelect);
