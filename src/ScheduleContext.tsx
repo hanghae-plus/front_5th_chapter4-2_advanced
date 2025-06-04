@@ -28,8 +28,9 @@ export const useScheduleContext = () => {
 };
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] =
-    useState<Record<string, Schedule[]>>(dummyScheduleMap);
+  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(
+    () => dummyScheduleMap
+  );
 
   const value = useMemo(
     () => ({

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -34,15 +34,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import { DAY_LABELS, PAGE_SIZE, TIME_SLOTS } from "./constants.ts";
 import { getFetchAllLectures } from "./api/apis.ts";
-
-interface Props {
-  searchInfo: {
-    tableId: string;
-    day?: string;
-    time?: number;
-  } | null;
-  onClose: () => void;
-}
+import { useSearchStore } from "./store/searchStore.ts";
 
 interface SearchOption {
   query?: string;
@@ -54,8 +46,10 @@ interface SearchOption {
 }
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
-const SearchDialog = ({ searchInfo, onClose }: Props) => {
+const SearchDialog = memo(() => {
   const { setSchedulesMap } = useScheduleContext();
+
+  const { searchInfo, resetSearchInfo } = useSearchStore();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -137,7 +131,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       [tableId]: [...prev[tableId], ...schedules],
     }));
 
-    onClose();
+    resetSearchInfo();
   };
 
   useEffect(() => {
@@ -147,7 +141,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(results.flatMap((result) => result.data));
+      setLectures(
+        results.flatMap((result) => (result as { data: Lecture[] }).data)
+      );
     });
   }, []);
 
@@ -182,8 +178,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     setPage(1);
   }, [searchInfo]);
 
+  const handleModalClose = useCallback(() => {
+    resetSearchInfo();
+  }, [resetSearchInfo]);
+
   return (
-    <Modal isOpen={Boolean(searchInfo)} onClose={onClose} size="6xl">
+    <Modal isOpen={Boolean(searchInfo)} onClose={handleModalClose} size="6xl">
       <ModalOverlay />
       <ModalContent maxW="90vw" w="1000px">
         <ModalHeader>수업 검색</ModalHeader>
@@ -409,6 +409,6 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       </ModalContent>
     </Modal>
   );
-};
+});
 
 export default SearchDialog;
