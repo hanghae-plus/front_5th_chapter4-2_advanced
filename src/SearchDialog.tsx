@@ -153,9 +153,8 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [lectures]
   );
 
+  const { query = "", credits, grades, days, times, majors } = searchOptions;
   const filteredLectures = useMemo(() => {
-    const { query = "", credits, grades, days, times, majors } = searchOptions;
-
     return lecturesWithParsedSchedule
       .filter(
         (lecture) =>
@@ -171,30 +170,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       .filter(
         (lecture) => !credits || lecture.credits.startsWith(String(credits))
       )
-      .filter((lecture) => {
-        if (days.length === 0) {
-          return true;
-        }
-        return lecture.parsedSchedule.some((s) => days.includes(s.day));
-      })
-      .filter((lecture) => {
-        if (times.length === 0) {
-          return true;
-        }
-        return lecture.parsedSchedule.some((s) =>
-          s.range.some((time) => times.includes(time))
-        );
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    lecturesWithParsedSchedule,
-    searchOptions.query,
-    searchOptions.credits,
-    JSON.stringify(searchOptions.grades),
-    JSON.stringify(searchOptions.days),
-    JSON.stringify(searchOptions.times),
-    JSON.stringify(searchOptions.majors),
-  ]);
+      .filter(
+        (lecture) =>
+          days.length === 0 ||
+          lecture.parsedSchedule.some((s) => days.includes(s.day))
+      )
+      .filter(
+        (lecture) =>
+          times.length === 0 ||
+          lecture.parsedSchedule.some((s) =>
+            s.range.some((time) => times.includes(time))
+          )
+      );
+  }, [lecturesWithParsedSchedule, query, credits, grades, days, times, majors]);
 
   const lastPage = useMemo(
     () => Math.ceil(filteredLectures.length / PAGE_SIZE),
