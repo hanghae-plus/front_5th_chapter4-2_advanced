@@ -7,7 +7,6 @@ import {
   FormControl,
   FormLabel,
   HStack,
-  Input,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -30,6 +29,7 @@ import {
   Wrap,
 } from "@chakra-ui/react";
 import MajorFilter from "./MajorFilter";
+import SearchInput from "./SearchInput";
 import { useScheduleContext } from "@/ScheduleContext.tsx";
 import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
@@ -249,15 +249,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
             spacing={4}
             align="stretch">
             <HStack spacing={4}>
-              <FormControl>
-                <FormLabel>검색어</FormLabel>
-                <Input
-                  placeholder="과목명 또는 과목코드"
-                  value={searchOptions.query}
-                  onChange={(e) => changeSearchOption("query", e.target.value)}
-                />
-              </FormControl>
-
+              <SearchInput
+                query={searchOptions.query}
+                changeSearchOption={changeSearchOption}
+              />
               <FormControl>
                 <FormLabel>학점</FormLabel>
                 <Select
