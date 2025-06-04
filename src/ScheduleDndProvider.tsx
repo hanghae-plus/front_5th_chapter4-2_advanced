@@ -15,17 +15,14 @@ import { Schedule } from './types.ts';
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {
-    const containerTop = containerNodeRect?.top ?? 0;
-    const containerLeft = containerNodeRect?.left ?? 0;
-    const containerBottom = containerNodeRect?.bottom ?? 0;
-    const containerRight = containerNodeRect?.right ?? 0;
+    if (!containerNodeRect || !draggingNodeRect) {
+      return transform;
+    }
 
-    const { top = 0, left = 0, bottom = 0, right = 0 } = draggingNodeRect ?? {};
-
-    const minX = containerLeft - left + 120 + 1;
-    const minY = containerTop - top + 40 + 1;
-    const maxX = containerRight - right;
-    const maxY = containerBottom - bottom;
+    const minX = containerNodeRect.left - draggingNodeRect.left + 120 + 1;
+    const minY = containerNodeRect.top - draggingNodeRect.top + 40 + 1;
+    const maxX = containerNodeRect.right - draggingNodeRect.right;
+    const maxY = containerNodeRect.bottom - draggingNodeRect.bottom;
 
     return {
       ...transform,
@@ -63,18 +60,20 @@ export default function ScheduleDndProvider({ children }: ScheduleDndProviderPro
     })
   );
 
-  // 드래그 시작 시 어떤 tableId인지 파악
+  // 드래그 시작 시 실행 : 드래그 중인 아이템의 tableId 호출
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const [tableId] = String(event.active.id).split(':');
     setActiveTableId(tableId);
   }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // 드래그 종료 시 실행 : 아이템 위치 업데이트
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, delta } = event;
       if (!active) return;
 
+      // 드래그 중인 아이템의 tableId와 index 추출
       const [tableId, index] = String(active.id).split(':');
       const scheduleList = schedulesMap[tableId];
       if (!scheduleList) return;
@@ -90,13 +89,13 @@ export default function ScheduleDndProvider({ children }: ScheduleDndProviderPro
           const nowDayIndex = DAY_LABELS.indexOf(item.day as (typeof DAY_LABELS)[number]);
           return {
             ...item,
-            day: DAY_LABELS[nowDayIndex + moveDayIndex],
-            range: item.range.map((time) => time + moveTimeIndex),
+            day: DAY_LABELS[nowDayIndex + moveDayIndex], // dayIndex 업데이트
+            range: item.range.map((time) => time + moveTimeIndex), // timeIndex 업데이트
           } as Schedule;
         });
         return {
           ...prev,
-          [tableId]: newArr,
+          [tableId]: newArr, // 해당 tableId의 스케줄 업데이트
         };
       });
 
@@ -106,6 +105,7 @@ export default function ScheduleDndProvider({ children }: ScheduleDndProviderPro
     [schedulesMap, setSchedulesMap]
   );
 
+  // children이 함수인지 확인하고, DndState를 인자로 호출하여 렌더링
   const renderChildren = () => {
     if (typeof children === 'function') {
       // children이 함수이면, DndState를 인자로 호출
