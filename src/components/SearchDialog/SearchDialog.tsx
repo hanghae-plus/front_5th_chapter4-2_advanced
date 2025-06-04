@@ -28,6 +28,7 @@ import {
   Wrap,
 } from "@chakra-ui/react";
 import CreditSelect from "./CreditSelect";
+import DaySelect from "./DaySelect";
 import GradeSelect from "./GradeSelect";
 import MajorFilter from "./MajorFilter";
 import SearchInput from "./SearchInput";
@@ -35,7 +36,6 @@ import { useScheduleContext } from "@/ScheduleContext.tsx";
 import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
 import { parseSchedule } from "@/utils.ts";
-import { DAY_LABELS } from "@/constants.ts";
 import { SearchOption } from "@/types.ts";
 
 interface Props {
@@ -269,25 +269,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 grades={searchOptions.grades}
                 changeSearchOption={changeSearchOption}
               />
-
-              <FormControl>
-                <FormLabel>요일</FormLabel>
-                <CheckboxGroup
-                  value={searchOptions.days}
-                  onChange={(value) =>
-                    changeSearchOption("days", value as string[])
-                  }>
-                  <HStack spacing={4}>
-                    {DAY_LABELS.map((day) => (
-                      <Checkbox
-                        key={day}
-                        value={day}>
-                        {day}
-                      </Checkbox>
-                    ))}
-                  </HStack>
-                </CheckboxGroup>
-              </FormControl>
+              <DaySelect
+                days={searchOptions.days}
+                changeSearchOption={changeSearchOption}
+              />
             </HStack>
 
             <HStack spacing={4}>
