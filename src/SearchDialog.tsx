@@ -53,6 +53,10 @@ interface SearchOption {
   credits?: number;
 }
 
+type LectureWithParsedSchedule = Lecture & {
+  parsedSchedule: ReturnType<typeof parseSchedule>;
+};
+
 const TIME_SLOTS = [
   { id: 1, label: "09:00~09:30" },
   { id: 2, label: "09:30~10:00" },
@@ -142,7 +146,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     () =>
       lectures.map((lectures) => ({
         ...lectures,
-        schedule: lectures.schedule ? parseSchedule(lectures.schedule) : [],
+        parsedSchedule: lectures.schedule
+          ? parseSchedule(lectures.schedule)
+          : [],
       })),
     [lectures]
   );
@@ -169,13 +175,13 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         if (days.length === 0) {
           return true;
         }
-        return lecture.schedule.some((s) => days.includes(s.day));
+        return lecture.parsedSchedule.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
         if (times.length === 0) {
           return true;
         }
-        return lecture.schedule.some((s) =>
+        return lecture.parsedSchedule.some((s) =>
           s.range.some((time) => times.includes(time))
         );
       });
@@ -215,12 +221,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   );
 
   const addSchedule = useCallback(
-    (lecture: Lecture) => {
+    (lecture: LectureWithParsedSchedule) => {
       if (!searchInfo) return;
 
       const { tableId } = searchInfo;
 
-      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+      const schedules = lecture.parsedSchedule.map((schedule) => ({
         ...schedule,
         lecture,
       }));
