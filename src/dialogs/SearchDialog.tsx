@@ -9,7 +9,6 @@ import {
   ModalHeader,
   ModalOverlay,
   Table,
-  Tbody,
   Text,
   Th,
   Thead,
@@ -19,7 +18,7 @@ import { useScheduleActions } from '../context/ScheduleContext.tsx';
 import { Lecture, SearchOption } from '../types';
 import { parseSchedule } from '../utils/utils.ts';
 import { fetchAllLectures } from '../api/lectures.ts';
-import LectureRow from '../components/LectureRow.tsx';
+import LectureTable from '../components/LectureTable.tsx';
 import SearchFilters from '../components/SearchFilters.tsx';
 import { PAGE_SIZE } from '../constants';
 
@@ -93,7 +92,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const changeSearchOption = useCallback(
     (field: keyof SearchOption, value: SearchOption[typeof field]) => {
       setPage(1);
-      setSearchOptions({ ...searchOptions, [field]: value });
+      setSearchOptions((prev) => ({ ...prev, [field]: value }));
       loaderWrapperRef.current?.scrollTo(0, 0);
     },
     []
@@ -193,17 +192,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               </Table>
 
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
-                <Table size="sm" variant="striped">
-                  <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <LectureRow
-                        key={`${lecture.id}-${index}`}
-                        lecture={lecture}
-                        onAdd={addSchedule}
-                      />
-                    ))}
-                  </Tbody>
-                </Table>
+                <LectureTable visibleLectures={visibleLectures} onAdd={addSchedule} />
                 <Box ref={loaderRef} h="20px" />
               </Box>
             </Box>
