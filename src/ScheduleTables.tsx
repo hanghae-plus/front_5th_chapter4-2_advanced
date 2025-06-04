@@ -4,9 +4,11 @@ import SearchDialog from "./SearchDialog.tsx";
 import { useMemo } from "react";
 import IndividualScheduleTable from "./components/IndividualScheduleTable.tsx";
 import ScheduleDndProvider from "./ScheduleDndProvider.tsx";
+import { useDndContext } from "@dnd-kit/core";
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const dndContext = useDndContext();
 
   const scheduleList = useMemo(
     () => Object.entries(schedulesMap),
@@ -24,6 +26,7 @@ export const ScheduleTables = () => {
               schedules={schedules}
               index={index}
               setSchedulesMap={setSchedulesMap}
+              dndContext={dndContext}
             />
           </ScheduleDndProvider>
         ))}
