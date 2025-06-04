@@ -29,11 +29,11 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import fetchApi from "./lib/fetchApi.ts";
-import { Lecture } from "./types.ts";
-import { parseSchedule } from "./utils.ts";
-import { DAY_LABELS } from "./constants.ts";
+import { useScheduleContext } from "@/ScheduleContext.tsx";
+import fetchApi from "@/lib/fetchApi.ts";
+import { Lecture } from "@/types.ts";
+import { parseSchedule } from "@/utils.ts";
+import { DAY_LABELS } from "@/constants.ts";
 
 interface Props {
   searchInfo: {
