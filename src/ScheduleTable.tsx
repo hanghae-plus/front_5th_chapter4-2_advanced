@@ -15,12 +15,13 @@ import {
 import { CellSize, DAY_LABELS, 분 } from './constants.ts';
 import { Schedule } from './types.ts';
 import { fill2, parseHnM } from './utils.ts';
-import { useDndContext, useDraggable } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { ComponentProps, Fragment, memo, useMemo } from 'react';
 
 interface Props {
   tableId: string;
+  activeTableId?: string;
   schedules: Schedule[];
   onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
@@ -38,29 +39,23 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
-const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
+const ScheduleTable = ({
+  tableId,
+  activeTableId,
+  schedules,
+  onScheduleTimeClick,
+  onDeleteButtonClick,
+}: Props) => {
   const getColor = (lectureId: string): string => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ['#fdd', '#ffd', '#dff', '#ddf', '#fdf', '#dfd'];
     return colors[lectures.indexOf(lectureId) % colors.length];
   };
 
-  const useActiveTableId = () => {
-    const { active } = useDndContext();
-    return useMemo(() => {
-      if (!active?.id) return null;
-      return String(active.id).split(':')[0];
-    }, [active?.id]);
-  };
-
-  const activeTableId = useActiveTableId();
+  const isActive = useMemo(() => activeTableId === tableId, [activeTableId, tableId]);
 
   return (
-    <Box
-      position="relative"
-      outline={activeTableId === tableId ? '5px dashed' : undefined}
-      outlineColor="blue.300"
-    >
+    <Box position="relative" outline={isActive ? '5px dashed' : undefined} outlineColor="blue.300">
       <Grid
         templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
         templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}

@@ -3,9 +3,12 @@ import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
 import SearchDialog from './SearchDialog.tsx';
 import { useState } from 'react';
-import { Lecture } from './types.ts';
 
-export const ScheduleTables = ({ lectures }: { lectures: Lecture[] }) => {
+interface ScheduleTablesProps {
+  activeTableId?: string;
+}
+
+export const ScheduleTables = ({ activeTableId }: ScheduleTablesProps) => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
   const [searchInfo, setSearchInfo] = useState<{
     tableId: string;
@@ -58,6 +61,7 @@ export const ScheduleTables = ({ lectures }: { lectures: Lecture[] }) => {
               key={`schedule-table-${index}`}
               schedules={schedules}
               tableId={tableId}
+              activeTableId={activeTableId}
               onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
               onDeleteButtonClick={({ day, time }) =>
                 setSchedulesMap((prev) => ({
@@ -71,11 +75,7 @@ export const ScheduleTables = ({ lectures }: { lectures: Lecture[] }) => {
           </Stack>
         ))}
       </Flex>
-      <SearchDialog
-        lectures={lectures}
-        searchInfo={searchInfo}
-        onClose={() => setSearchInfo(null)}
-      />
+      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
     </>
   );
 };
