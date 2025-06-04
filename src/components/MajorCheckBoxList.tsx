@@ -25,7 +25,6 @@ interface Props {
 function MajorCheckBoxList(props: Props) {
   const { searchOptions, changeSearchOption, allMajors } = props;
 
-  console.log("🔁 MajorCheckboxList 렌더링", props);
   return (
     <CheckboxGroup
       colorScheme="green"
