@@ -2,27 +2,39 @@ import React, { createContext, PropsWithChildren, useContext, useState } from 'r
 import { Schedule } from './types.ts';
 import dummyScheduleMap from './dummyScheduleMap.ts';
 
-interface ScheduleContextType {
-  schedulesMap: Record<string, Schedule[]>;
-  setSchedulesMap: React.Dispatch<React.SetStateAction<Record<string, Schedule[]>>>;
-}
+// 상태만 관리하는 Context
+const ScheduleStateContext = createContext<Record<string, Schedule[]> | undefined>(undefined);
+// 액션만 관리하는 Context
+const ScheduleActionsContext = createContext<
+  React.Dispatch<React.SetStateAction<Record<string, Schedule[]>>> | undefined
+>(undefined);
 
-const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
-
-export const useScheduleContext = () => {
-  const context = useContext(ScheduleContext);
+// 커스텀 훅
+export const useScheduleState = () => {
+  const context = useContext(ScheduleStateContext);
   if (context === undefined) {
-    throw new Error('useSchedule must be used within a ScheduleProvider');
+    throw new Error('useScheduleState must be used within a ScheduleProvider');
   }
   return context;
 };
 
+export const useScheduleActions = () => {
+  const context = useContext(ScheduleActionsContext);
+  if (context === undefined) {
+    throw new Error('useScheduleActions must be used within a ScheduleProvider');
+  }
+  return context;
+};
+
+// Provider 분리
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
 
   return (
-    <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
-      {children}
-    </ScheduleContext.Provider>
+    <ScheduleStateContext.Provider value={schedulesMap}>
+      <ScheduleActionsContext.Provider value={setSchedulesMap}>
+        {children}
+      </ScheduleActionsContext.Provider>
+    </ScheduleStateContext.Provider>
   );
 };

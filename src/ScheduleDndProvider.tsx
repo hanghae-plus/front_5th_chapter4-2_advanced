@@ -10,7 +10,7 @@ import {
 } from '@dnd-kit/core';
 import { useState, useCallback } from 'react';
 import { CellSize, DAY_LABELS } from './constants.ts';
-import { useScheduleContext } from './ScheduleContext.tsx';
+import { useScheduleState, useScheduleActions } from './ScheduleContext.tsx';
 import { Schedule } from './types.ts';
 
 function createSnapModifier(): Modifier {
@@ -48,7 +48,8 @@ interface ScheduleDndProviderProps {
 }
 
 export default function ScheduleDndProvider({ children }: ScheduleDndProviderProps) {
-  const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const schedulesMap = useScheduleState();
+  const setSchedulesMap = useScheduleActions();
 
   const [activeTableId, setActiveTableId] = useState<string | null>(null);
 
