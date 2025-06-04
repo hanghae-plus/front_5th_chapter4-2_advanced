@@ -34,6 +34,7 @@ import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
 import { parseSchedule } from "@/utils.ts";
 import { DAY_LABELS } from "@/constants.ts";
+import { SearchOption } from "@/types.ts";
 
 interface Props {
   searchInfo: {
@@ -42,15 +43,6 @@ interface Props {
     time?: number;
   } | null;
   onClose: () => void;
-}
-
-interface SearchOption {
-  query?: string;
-  grades: number[];
-  days: string[];
-  times: number[];
-  majors: string[];
-  credits?: number;
 }
 
 const TIME_SLOTS = [

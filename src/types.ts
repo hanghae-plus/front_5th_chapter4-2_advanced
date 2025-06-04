@@ -20,3 +20,12 @@ export interface fetchApiParams {
   url: string;
   body?: unknown;
 }
+
+export interface SearchOption {
+  query?: string;
+  grades: number[];
+  days: string[];
+  times: number[];
+  majors: string[];
+  credits?: number;
+}
