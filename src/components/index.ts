@@ -5,3 +5,4 @@ export { default as TimeCheckbox } from "./TimeCheckbox";
 export { default as MajorCheckbox } from "./MajorCheckbox";
 export { default as SearchInput } from "./SearchInput";
 export { default as LectureTable } from "./LectureTable";
+export { default as ScheduleGrid } from "./ScheduleGrid";
