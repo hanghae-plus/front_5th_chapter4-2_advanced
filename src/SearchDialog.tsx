@@ -32,7 +32,7 @@ import {
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
 
 interface Props {
@@ -82,19 +82,46 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
+const memoizedFetching = (fn: () => Promise<AxiosResponse<Lecture[]>>) => {
+  const cache = new Map<string, Promise<AxiosResponse<Lecture[]>>>();
+
+  return () => {
+    const key = fn.name || "default";
+
+    if (cache.has(key)) {
+      return cache.get(key)!;
+    }
+
+    const promise = fn();
+    cache.set(key, promise);
+
+    promise.catch(() => {
+      cache.delete(key);
+    });
+
+    return promise;
+  };
+};
+
 const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
 const fetchLiberalArts = () =>
   axios.get<Lecture[]>("/schedules-liberal-arts.json");
 
+const cachedFetchMajors = memoizedFetching(fetchMajors);
+const cachedFetchLiberalArts = memoizedFetching(fetchLiberalArts);
+
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 const fetchAllLectures = async () =>
   await Promise.all([
-    (console.log("API Call 1", performance.now()), await fetchMajors()),
-    (console.log("API Call 2", performance.now()), await fetchLiberalArts()),
-    (console.log("API Call 3", performance.now()), await fetchMajors()),
-    (console.log("API Call 4", performance.now()), await fetchLiberalArts()),
-    (console.log("API Call 5", performance.now()), await fetchMajors()),
-    (console.log("API Call 6", performance.now()), await fetchLiberalArts()),
+    (console.log("API Call 1", performance.now()), await cachedFetchMajors()),
+    (console.log("API Call 2", performance.now()),
+    await cachedFetchLiberalArts()),
+    (console.log("API Call 3", performance.now()), await cachedFetchMajors()),
+    (console.log("API Call 4", performance.now()),
+    await cachedFetchLiberalArts()),
+    (console.log("API Call 5", performance.now()), await cachedFetchMajors()),
+    (console.log("API Call 6", performance.now()),
+    await cachedFetchLiberalArts()),
   ]);
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
