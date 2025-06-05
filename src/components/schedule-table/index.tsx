@@ -1,12 +1,20 @@
 import { useLocalScheduleContext } from "@/hooks/use-local-schedule-context";
 import { Box } from "@chakra-ui/react";
+import { useDndContext } from "@dnd-kit/core";
 import { memo, useMemo } from "react";
 import { DraggableSchedule } from "./draggable-schedule";
 import { ScheduleTableGrid } from "./schedule-table-grid";
 
 // ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
-const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
+const ScheduleTable = memo(() => {
   const { tableId, schedules, handleDeleteButtonClick } = useLocalScheduleContext();
+
+  const dndContext = useDndContext();
+
+  const activeTableId = useMemo(() => {
+    const activeId = dndContext.active?.id;
+    return activeId ? String(activeId).split(":")[0] : null;
+  }, [dndContext.active?.id]);
 
   const colorMap = useMemo(() => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
@@ -35,7 +43,7 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
   }, [schedules, tableId, colorMap, onDeleteButtonClick]);
 
   return (
-    <Box position="relative" outline={isActive ? "5px dashed" : undefined} outlineColor="blue.300">
+    <Box position="relative" outline={activeTableId === tableId ? "5px dashed" : undefined} outlineColor="blue.300">
       <ScheduleTableGrid />
       {schedulesItems}
     </Box>

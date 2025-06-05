@@ -11,7 +11,6 @@ type TableWrapperProps = {
   index: number;
   isDeletable: boolean;
   schedules: Schedule[];
-  isActive: boolean;
   setSearchInfo: React.Dispatch<React.SetStateAction<SearchInfo>>;
   handleScheduleTimeClick: (timeInfo: DayTime) => void;
   handleDeleteButtonClick: (timeInfo: DayTime) => void;
@@ -22,7 +21,6 @@ export const TableWrapper = memo(
     index,
     isDeletable,
     schedules,
-    isActive,
     setSearchInfo,
     handleScheduleTimeClick,
     handleDeleteButtonClick,
@@ -43,7 +41,7 @@ export const TableWrapper = memo(
             handleScheduleTimeClick={handleScheduleTimeClick}
             handleDeleteButtonClick={handleDeleteButtonClick}
           >
-            <ScheduleTable key={`schedule-table-${index}`} isActive={isActive} />
+            <ScheduleTable key={`schedule-table-${index}`} />
           </LocalScheduleProvider>
         </Stack>
       </ScheduleDndProvider>
