@@ -108,12 +108,12 @@ const cachedFetchers = [
 ];
 
 // 각각의 데이터를 병렬로 요청
-const fetchAllLectures = async (): Promise<Lecture[]> => {
+const fetchAllLectures = async () => {
   const results = await Promise.all(
     cachedFetchers.map(fetcher => fetcher())
   );
 
-  return results.flat();
+  return results;
 };
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
