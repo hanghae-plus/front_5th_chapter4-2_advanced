@@ -85,7 +85,7 @@ const PAGE_SIZE = 100;
 
 function cachedFetchResult<T>(fetchFunc: () => Promise<AxiosResponse<T>>) {
   let result: Promise<T> | null = null;
-  console.log("result", result);
+
   return () => {
     if (!result) {
       result = fetchFunc()
