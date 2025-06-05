@@ -1,0 +1,26 @@
+name: Deploy to Firebase Hosting
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            # npm 관련 단계 제거 (불필요)
+            # - name: Setup Node.js
+            # - name: Install dependencies
+
+            - name: Deploy to Firebase
+              uses: FirebaseExtended/action-hosting-deploy@v0
+              with:
+                  repoToken: "${{ secrets.GITHUB_TOKEN }}"
+                  firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+                  channelId: live
+                  projectId: hanghae-chapter-4-2-advanced
