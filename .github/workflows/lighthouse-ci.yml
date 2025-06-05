@@ -49,8 +49,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const core = require('@actions/core');
-            const { context,github} = require('@actions/github');
 
             const results = JSON.parse(fs.readFileSync("${{ env.working-directory }}/lhci_reports/manifest.json"));
             let comments = "";
@@ -61,17 +59,17 @@ jobs:
               const format = (res) => Math.round(res * 100);
               Object.keys(summary).forEach((key) => (summary[key] = format(summary[key])));
 
-              const score = (res) => (res >= 90 ? "🟢" : res >= 70 ? "🟠" : "🔴");
+              const badge = (res) => (res >= 90 ? "🟢" : res >= 70 ? "🟠" : "🔴");
 
               const comment = [
                 `⚡️ Lighthouse report ${index}`,
                 `| Category | Score |`,
                 `| --- | --- |`,
-                `| ${score(summary.performance)} Performance | ${summary.performance} |`,
-                `| ${score(summary.accessibility)} Accessibility | ${summary.accessibility} |`,
-                `| ${score(summary['best-practices'])} Best practices | ${summary['best-practices']} |`,
-                `| ${score(summary.seo)} SEO | ${summary.seo} |`,
-                `| ${score(summary.pwa)} PWA | ${summary.pwa} |`,
+                `| ${badge(summary.performance)} Performance | ${summary.performance} |`,
+                `| ${badge(summary.accessibility)} Accessibility | ${summary.accessibility} |`,
+                `| ${badge(summary['best-practices'])} Best practices | ${summary['best-practices']} |`,
+                `| ${badge(summary.seo)} SEO | ${summary.seo} |`,
+                `| ${badge(summary.pwa)} PWA | ${summary.pwa} |`,
                 `\n`,
               ].join("\n");
               comments += `\n> 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
