@@ -17,7 +17,7 @@ import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
 import { useDndContext, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment, memo } from "react";
+import { ComponentProps, Fragment, memo, useMemo } from "react";
 
 interface Props {
   tableId: string;
@@ -26,25 +26,29 @@ interface Props {
   onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
 }
 
-const TIMES = [
-  ...Array(18)
-    .fill(0)
-    .map((v, k) => v + k * 30 * 분)
-    .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
-
-  ...Array(6)
-    .fill(18 * 30 * 분)
-    .map((v, k) => v + k * 55 * 분)
-    .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
-] as const;
-
 const ScheduleTable = memo(
   ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const getColor = (lectureId: string): string => {
+    const TIMES = useMemo(
+      () => [
+        ...Array(18)
+          .fill(0)
+          .map((v, k) => v + k * 30 * 분)
+          .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
+
+        ...Array(6)
+          .fill(18 * 30 * 분)
+          .map((v, k) => v + k * 55 * 분)
+          .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
+      ],
+      []
+    );
+
+    const getColor = useMemo(() => {
       const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
       const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-      return colors[lectures.indexOf(lectureId) % colors.length];
-    };
+      return (lectureId: string): string =>
+        colors[lectures.indexOf(lectureId) % colors.length];
+    }, [schedules]);
 
     const dndContext = useDndContext();
 
