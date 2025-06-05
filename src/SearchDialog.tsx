@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -106,7 +106,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     return getFilteredLectures(lectures, searchOptions);
   }, [lectures, searchOptions]);
 
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+  const lastPage = useMemo(
+    () => Math.ceil(filteredLectures.length / PAGE_SIZE),
+    [filteredLectures]
+  );
 
   const visibleLectures = useMemo(() => {
     return filteredLectures.slice(0, page * PAGE_SIZE);
@@ -116,32 +119,35 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     return [...new Set(lectures.map((lecture) => lecture.major))];
   }, [lectures]);
 
-  const changeSearchOption = (
-    field: keyof SearchOption,
-    value: SearchOption[typeof field]
-  ) => {
-    setPage(1);
-    setSearchOptions({ ...searchOptions, [field]: value });
-    loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  const changeSearchOption = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      setPage(1);
+      setSearchOptions((prev) => ({ ...prev, [field]: value }));
+      loaderWrapperRef.current?.scrollTo(0, 0);
+    },
+    []
+  );
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    const { tableId } = searchInfo;
+      const { tableId } = searchInfo;
 
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
+      const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+        ...schedule,
+        lecture,
+      }));
 
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
 
-    onClose();
-  };
+      onClose();
+    },
+    [onClose, searchInfo, setSchedulesMap]
+  );
 
   useEffect(() => {
     const start = performance.now();
