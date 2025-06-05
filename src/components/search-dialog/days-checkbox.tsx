@@ -1,4 +1,4 @@
-import { DAY_LABELS } from "@/constants.ts";
+import { DAY_LABELS } from "@/config/constants";
 import { DialogChildProps } from "@/types";
 import { Checkbox, CheckboxGroup, FormControl, FormLabel, HStack } from "@chakra-ui/react";
 import { memo } from "react";

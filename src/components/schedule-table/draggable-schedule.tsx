@@ -1,5 +1,5 @@
-import { CellSize, DAY_LABELS } from "@/constants.ts";
-import { Schedule } from "@/types.ts";
+import { CellSize, DAY_LABELS } from "@/config/constants";
+import { Schedule } from "@/types";
 import {
   Box,
   Button,

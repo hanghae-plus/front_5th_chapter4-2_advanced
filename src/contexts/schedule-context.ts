@@ -1,4 +1,4 @@
-import { Schedule } from "@/types.ts";
+import { Schedule } from "@/types";
 import React, { createContext } from "react";
 
 export interface ScheduleContextType {

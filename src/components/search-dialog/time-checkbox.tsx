@@ -1,4 +1,4 @@
-import { TIME_SLOTS } from "@/constants";
+import { TIME_SLOTS } from "@/config/constants";
 import { DialogChildProps } from "@/types";
 import {
   Box,

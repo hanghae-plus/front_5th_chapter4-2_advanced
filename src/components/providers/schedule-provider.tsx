@@ -1,6 +1,6 @@
+import dummyScheduleMap from "@/config/dummy-schedule-map";
 import { ScheduleContext } from "@/contexts/schedule-context";
-import dummyScheduleMap from "@/dummyScheduleMap.ts";
-import { Schedule } from "@/types.ts";
+import { Schedule } from "@/types";
 import { PropsWithChildren, useMemo, useState } from "react";
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {

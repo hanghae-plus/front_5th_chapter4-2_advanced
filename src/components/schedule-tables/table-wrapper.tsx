@@ -1,6 +1,6 @@
 import { LocalScheduleProvider } from "@/components/providers/local-schedule-provider";
 import ScheduleTable from "@/components/schedule-table";
-import { DayTime, Schedule } from "@/types.ts";
+import { DayTime, Schedule } from "@/types";
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { memo } from "react";
 

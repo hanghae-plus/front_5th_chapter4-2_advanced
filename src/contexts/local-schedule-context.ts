@@ -1,4 +1,4 @@
-import { DayTime, Schedule } from "@/types.ts";
+import { DayTime, Schedule } from "@/types";
 import { createContext } from "react";
 
 // 테이블별 local schedules Context 함수

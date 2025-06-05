@@ -1,4 +1,4 @@
-import { Lecture } from "@/types.ts";
+import { Lecture } from "@/types";
 import { Table, Tbody } from "@chakra-ui/react";
 import { memo } from "react";
 import { LectureTr } from "./lecture-tr";

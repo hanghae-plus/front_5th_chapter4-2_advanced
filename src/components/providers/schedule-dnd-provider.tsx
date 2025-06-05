@@ -1,4 +1,4 @@
-import { CellSize, DAY_LABELS } from "@/constants.ts";
+import { CellSize, DAY_LABELS } from "@/config/constants";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
 import { DndContext, DragEndEvent, Modifier, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { PropsWithChildren, useCallback } from "react";

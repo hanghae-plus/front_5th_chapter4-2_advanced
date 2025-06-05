@@ -1,8 +1,8 @@
-import { PAGE_SIZE } from "@/constants";
+import { PAGE_SIZE } from "@/config/constants";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
 import { cacheGet } from "@/lib/axios.ts";
-import { Lecture, SearchOption } from "@/types.ts";
-import { parseSchedule } from "@/utils.ts";
+import { parseSchedule } from "@/lib/utils";
+import { Lecture, SearchOption } from "@/types";
 import {
   Box,
   HStack,

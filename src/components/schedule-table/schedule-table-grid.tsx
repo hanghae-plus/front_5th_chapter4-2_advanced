@@ -1,6 +1,6 @@
-import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "@/constants.ts";
-import { DayTime } from "@/types.ts";
-import { fill2 } from "@/utils.ts";
+import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "@/config/constants";
+import { fill2 } from "@/lib/utils";
+import { DayTime } from "@/types";
 import { Flex, Grid, GridItem, Text } from "@chakra-ui/react";
 import { Fragment, memo } from "react";
 

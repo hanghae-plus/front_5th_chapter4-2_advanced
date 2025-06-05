@@ -1,4 +1,4 @@
-import { parseHnM } from "./utils.ts";
+import { parseHnM } from "@/lib/utils";
 export const DAY_LABELS = ["월", "화", "수", "목", "금", "토"] as const;
 
 export const CellSize = {

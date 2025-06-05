@@ -1,6 +1,6 @@
 import SearchDialog from "@/components/search-dialog";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
-import { DayTime } from "@/types.ts";
+import { DayTime } from "@/types";
 import { Flex } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { useMemo, useState } from "react";
