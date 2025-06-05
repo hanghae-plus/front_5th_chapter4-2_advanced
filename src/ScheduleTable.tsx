@@ -17,7 +17,14 @@ import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment, memo, useMemo, useState } from "react";
+import {
+  ComponentProps,
+  Fragment,
+  memo,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { useScheduleTableContext } from "./ScheduleTableContext.tsx";
 
 interface Props {
@@ -47,11 +54,17 @@ const ScheduleTable = memo(
     onDeleteButtonClick,
   }: Props) => {
     const { schedules } = useScheduleTableContext();
-    const getColor = (lectureId: string): string => {
-      const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-      const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-      return colors[lectures.indexOf(lectureId) % colors.length];
-    };
+
+    const getColor = useCallback(
+      (lectureId: string): string => {
+        const lectures = [
+          ...new Set(schedules.map(({ lecture }) => lecture.id)),
+        ];
+        const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
+        return colors[lectures.indexOf(lectureId) % colors.length];
+      },
+      [schedules]
+    );
 
     const deleteButtonHandlers = useMemo(() => {
       return schedules.map(
