@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -123,33 +123,37 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
-    return lectures
-      .filter(lecture =>
+    
+    return lectures.reduce<Lecture[]>((filtered, lecture) => {
+      // 검색어 필터링
+      const matchesQuery = !query || 
         lecture.title.toLowerCase().includes(query.toLowerCase()) ||
-        lecture.id.toLowerCase().includes(query.toLowerCase())
-      )
-      .filter(lecture => grades.length === 0 || grades.includes(lecture.grade))
-      .filter(lecture => majors.length === 0 || majors.includes(lecture.major))
-      .filter(lecture => !credits || lecture.credits.startsWith(String(credits)))
-      .filter(lecture => {
-        if (days.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
-        return schedules.some(s => days.includes(s.day));
-      })
-      .filter(lecture => {
-        if (times.length === 0) {
-          return true;
-        }
-        const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
-        return schedules.some(s => s.range.some(time => times.includes(time)));
-      });
-  }
+        lecture.id.toLowerCase().includes(query.toLowerCase());
+      
+      // 학년 필터링
+      const matchesGrade = grades.length === 0 || grades.includes(lecture.grade);
+      
+      // 전공 필터링
+      const matchesMajor = majors.length === 0 || majors.includes(lecture.major);
+      
+      // 학점 필터링
+      const matchesCredits = !credits || lecture.credits.startsWith(String(credits));
+      
+      // 시간표 필터링
+      const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
+      const matchesDay = days.length === 0 || schedules.some(s => days.includes(s.day));
+      const matchesTime = times.length === 0 || schedules.some(s => s.range.some(time => times.includes(time)));
+      
+      if (matchesQuery && matchesGrade && matchesMajor && matchesCredits && matchesDay && matchesTime) {
+        filtered.push(lecture);
+      }
+      
+      return filtered;
+    }, []);
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
   const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
