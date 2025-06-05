@@ -2,7 +2,8 @@ import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleTable from "./ScheduleTable.tsx";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { SearchDialog } from "@/components/SearchDialog";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useDndContext } from "@dnd-kit/core";
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
@@ -13,6 +14,15 @@ export const ScheduleTables = () => {
   } | null>(null);
 
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
+  const { active } = useDndContext();
+
+  const activeTableId = useMemo(() => {
+    const activeId = active?.id;
+    if (activeId) {
+      return String(activeId).split(":")[0];
+    }
+    return null;
+  }, [active]);
 
   const duplicate = (targetId: string) => {
     setSchedulesMap((prev) => ({
@@ -27,6 +37,27 @@ export const ScheduleTables = () => {
       return { ...prev };
     });
   };
+
+  const handleScheduleTimeClick = useCallback(
+    (tableId: string, timeInfo: { day: string; time: number }) => {
+      setSearchInfo({ tableId, ...timeInfo });
+    },
+    [],
+  );
+
+  const handleDeleteButtonClick = useCallback(
+    (tableId: string, timeInfo: { day: string; time: number }) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: prev[tableId].filter(
+          (schedule) =>
+            schedule.day !== timeInfo.day ||
+            !schedule.range.includes(timeInfo.time),
+        ),
+      }));
+    },
+    [],
+  );
 
   return (
     <>
@@ -73,18 +104,9 @@ export const ScheduleTables = () => {
               key={`schedule-table-${index}`}
               schedules={schedules}
               tableId={tableId}
-              onScheduleTimeClick={(timeInfo) =>
-                setSearchInfo({ tableId, ...timeInfo })
-              }
-              onDeleteButtonClick={({ day, time }) =>
-                setSchedulesMap((prev) => ({
-                  ...prev,
-                  [tableId]: prev[tableId].filter(
-                    (schedule) =>
-                      schedule.day !== day || !schedule.range.includes(time),
-                  ),
-                }))
-              }
+              isActive={activeTableId === tableId}
+              onScheduleTimeClick={handleScheduleTimeClick}
+              onDeleteButtonClick={handleDeleteButtonClick}
             />
           </Stack>
         ))}
