@@ -17,7 +17,7 @@ import { Schedule } from "./types.ts"
 import { fill2, parseHnM } from "./utils.ts"
 import { useDndContext, useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
-import { ComponentProps, Fragment } from "react"
+import { ComponentProps, Fragment, memo, useMemo } from "react"
 
 interface Props {
 	tableId: string
@@ -37,6 +37,21 @@ const TIMES = [
 		.map((v, k) => v + k * 55 * 분)
 		.map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const
+
+// 메모이제이션된 Schedule 내부 텍스트 컴포넌트
+const ScheduleContent = memo(
+	({ title, room }: { title: string; room?: string }) => {
+		console.log(`ScheduleContent ${title} 렌더링`, performance.now())
+		return (
+			<>
+				<Text fontSize="sm" fontWeight="bold">
+					{title}
+				</Text>
+				<Text fontSize="xs">{room}</Text>
+			</>
+		)
+	}
+)
 
 const ScheduleTable = ({
 	tableId,
@@ -142,56 +157,87 @@ const ScheduleTable = ({
 	)
 }
 
-const DraggableSchedule = ({
-	id,
-	data,
-	bg,
-	onDeleteButtonClick,
-}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
-		onDeleteButtonClick: () => void
-	}) => {
-	const { day, range, room, lecture } = data
-	const { attributes, setNodeRef, listeners, transform } = useDraggable({ id })
-	const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number])
-	const topIndex = range[0] - 1
-	const size = range.length
+/**
+ * DraggableSchedule - 드래그 가능한 스케줄 컴포넌트 메모이제이션 완료
+ * @param id - 드래그 ID
+ * @param data - 스케줄 데이터
+ * @param bg - 배경색
+ * @param onDeleteButtonClick - 삭제 버튼 클릭 핸들러
+ * @returns
+ */
+const DraggableSchedule = memo(
+	({
+		id,
+		data,
+		bg,
+		onDeleteButtonClick,
+	}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
+			onDeleteButtonClick: () => void
+		}) => {
+		const { day, range, room, lecture } = data
+		const { attributes, setNodeRef, listeners, transform, isDragging } =
+			useDraggable({
+				id,
+			})
+		const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number])
+		const topIndex = range[0] - 1
+		const size = range.length
 
-	return (
-		<Popover>
-			<PopoverTrigger>
-				<Box
-					position="absolute"
-					left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-					top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-					width={CellSize.WIDTH - 1 + "px"}
-					height={CellSize.HEIGHT * size - 1 + "px"}
-					bg={bg}
-					p={1}
-					boxSizing="border-box"
-					cursor="pointer"
-					ref={setNodeRef}
-					transform={CSS.Translate.toString(transform)}
-					{...listeners}
-					{...attributes}
-				>
-					<Text fontSize="sm" fontWeight="bold">
-						{lecture.title}
-					</Text>
-					<Text fontSize="xs">{room}</Text>
-				</Box>
-			</PopoverTrigger>
-			<PopoverContent onClick={(event) => event.stopPropagation()}>
-				<PopoverArrow />
-				<PopoverCloseButton />
-				<PopoverBody>
-					<Text>강의를 삭제하시겠습니까?</Text>
-					<Button colorScheme="red" size="xs" onClick={onDeleteButtonClick}>
-						삭제
-					</Button>
-				</PopoverBody>
-			</PopoverContent>
-		</Popover>
-	)
-}
+		// 위치 스타일 메모이 제이션
+		const positionStyle = useMemo(
+			() => ({
+				position: "absolute" as const,
+				left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
+				top: `${40 + (topIndex * CellSize.HEIGHT + 1)}px`,
+				width: CellSize.WIDTH - 1 + "px",
+				height: CellSize.HEIGHT * size - 1 + "px",
+				backgroundColor: bg,
+				padding: "4px",
+				boxSizing: "border-box" as const,
+				cursor: "pointer",
+				zIndex: isDragging ? 10 : 1,
+			}),
+			[leftIndex, topIndex, size, bg, isDragging]
+		)
+
+		// 변환 스타일을 별도로 관리
+		const transformStyle = useMemo(
+			() => CSS.Translate.toString(transform),
+			[transform]
+		)
+
+		// 내용 메모이제이션
+		const content = useMemo(
+			() => <ScheduleContent title={lecture.title} room={room} />,
+			[lecture.title, room]
+		)
+
+		return (
+			<Popover>
+				<PopoverTrigger>
+					<Box
+						ref={setNodeRef}
+						{...positionStyle}
+						transform={transformStyle}
+						{...listeners}
+						{...attributes}
+					>
+						{content}
+					</Box>
+				</PopoverTrigger>
+				<PopoverContent onClick={(event) => event.stopPropagation()}>
+					<PopoverArrow />
+					<PopoverCloseButton />
+					<PopoverBody>
+						<Text>강의를 삭제하시겠습니까?</Text>
+						<Button colorScheme="red" size="xs" onClick={onDeleteButtonClick}>
+							삭제
+						</Button>
+					</PopoverBody>
+				</PopoverContent>
+			</Popover>
+		)
+	}
+)
 
 export default ScheduleTable
