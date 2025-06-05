@@ -4,9 +4,6 @@ import { PropsWithChildren, useMemo } from "react";
 export const LocalScheduleProvider = ({
   tableId,
   schedules,
-  handleAddClick,
-  handleDuplicateClick,
-  handleDeleteClick,
   handleScheduleTimeClick,
   handleDeleteButtonClick,
   children,
@@ -15,21 +12,10 @@ export const LocalScheduleProvider = ({
     () => ({
       tableId,
       schedules,
-      handleAddClick,
-      handleDuplicateClick,
-      handleDeleteClick,
       handleScheduleTimeClick,
       handleDeleteButtonClick,
     }),
-    [
-      tableId,
-      schedules,
-      handleAddClick,
-      handleDuplicateClick,
-      handleDeleteClick,
-      handleScheduleTimeClick,
-      handleDeleteButtonClick,
-    ]
+    [tableId, schedules, handleScheduleTimeClick, handleDeleteButtonClick]
   );
   return <LocalScheduleContext.Provider value={contextValue}>{children}</LocalScheduleContext.Provider>;
 };

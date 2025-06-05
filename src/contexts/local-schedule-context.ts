@@ -5,9 +5,6 @@ import { createContext } from "react";
 export type LocalScheduleContextType = {
   tableId: string;
   schedules: Schedule[];
-  handleAddClick: () => void;
-  handleDuplicateClick: () => void;
-  handleDeleteClick: () => void;
   handleScheduleTimeClick: (timeInfo: DayTime) => void;
   handleDeleteButtonClick: (timeInfo: DayTime) => void;
 };
@@ -15,9 +12,6 @@ export type LocalScheduleContextType = {
 export const LocalScheduleContext = createContext<LocalScheduleContextType>({
   tableId: "",
   schedules: [],
-  handleAddClick: () => {},
-  handleDuplicateClick: () => {},
-  handleDeleteClick: () => {},
   handleScheduleTimeClick: () => {},
   handleDeleteButtonClick: () => {},
 });

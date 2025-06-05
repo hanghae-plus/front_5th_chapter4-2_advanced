@@ -31,9 +31,6 @@ export type DialogChildProps = {
 };
 
 export type TableHandlers = {
-  handleAddClick: () => void;
-  handleDuplicateClick: () => void;
-  handleDeleteClick: () => void;
   handleScheduleTimeClick: (timeInfo: DayTime) => void;
   handleDeleteButtonClick: (timeInfo: DayTime) => void;
 };

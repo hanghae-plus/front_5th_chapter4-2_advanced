@@ -12,7 +12,7 @@ export const ScheduleTableGrid = memo(() => {
     return DAY_LABELS.map((day) => {
       const Days = memo(() => {
         return (
-          <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
+          <GridItem borderLeft="1px" borderColor="gray.300" bg="gray.100">
             <Flex justifyContent="center" alignItems="center" h="full">
               <Text fontWeight="bold">{day}</Text>
             </Flex>
@@ -27,7 +27,7 @@ export const ScheduleTableGrid = memo(() => {
     return SCHEDULE_TIMES.map((time, timeIndex) => {
       const Frag = memo(() => {
         return (
-          <Fragment key={`시간-${timeIndex + 1}`}>
+          <Fragment>
             <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
               <Flex justifyContent="center" alignItems="center" h="full">
                 <Text fontSize="xs">

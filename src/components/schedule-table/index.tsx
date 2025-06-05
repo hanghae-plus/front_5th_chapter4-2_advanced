@@ -6,7 +6,7 @@ import { ScheduleTableGrid } from "./schedule-table-grid";
 
 // ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
 const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
-  const { tableId, schedules, handleDeleteButtonClick } = useLocalScheduleContext();
+  const { tableId, schedules, handleDeleteButtonClick: handlers } = useLocalScheduleContext();
   const colorMap = useMemo(() => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
@@ -16,6 +16,11 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
     }, {} as Record<string, string>);
   }, [schedules]);
 
+  const handleDelete = useMemo(
+    () => schedules.map((s) => () => handlers({ day: s.day, time: s.range[0] })),
+    [schedules, handlers]
+  );
+
   const schedulesItems = useMemo(() => {
     return schedules.map((schedule, index) => (
       <DraggableSchedule
@@ -23,10 +28,10 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
         id={`${tableId}:${index}`}
         data={schedule}
         bg={colorMap[schedule.lecture.id]}
-        onDeleteButtonClick={() => handleDeleteButtonClick({ day: schedule.day, time: schedule.range[0] })}
+        onDeleteButtonClick={handleDelete[index]}
       />
     ));
-  }, [schedules, tableId, colorMap, handleDeleteButtonClick]);
+  }, [schedules, tableId, colorMap, handleDelete]);
 
   return (
     <Box position="relative" outline={isActive ? "5px dashed" : undefined} outlineColor="blue.300">
