@@ -46,20 +46,20 @@ jobs:
         if: always()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const core = require('@actions/core');
+            const { context,github} = require('@actions/github');
+
             const results = JSON.parse(fs.readFileSync("${{ env.working-directory }}/lhci_reports/manifest.json"));
             let comments = "";
 
             results.forEach((result,index) => {
               const { summary } = result;
 
-              const formatResult = (res) => Math.round(res * 100);
-
-              Object.keys(summary).forEach(
-                (key) => (summary[key] = formatResult(summary[key]))
-              );
+              const format = (res) => Math.round(res * 100);
+              Object.keys(summary).forEach((key) => (summary[key] = format(summary[key])));
 
               const score = (res) => (res >= 90 ? "🟢" : res >= 70 ? "🟠" : "🔴");
 
@@ -74,13 +74,11 @@ jobs:
                 `| ${score(summary.pwa)} PWA | ${summary.pwa} |`,
                 `\n`,
               ].join("\n");
-
+              comments += `\n> 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
               comments += comment + "\n";
             });
 
             core.setOutput('comments', comments)
-
-            > 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
             
             await github.rest.issues.create({
               owner: context.repo.owner,
