@@ -102,7 +102,6 @@ const createLectureFetcher = () => {
       liberalArtsCache = fetchLiberalArts();
       console.log("API Call liberalArts", performance.now());
     }
-    // 병렬로 실행
     const [majors, liberalArts] = await Promise.all([
       majorsCache,
       liberalArtsCache,
@@ -123,7 +122,7 @@ const fetchAllLectures = createLectureFetcher();
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const { setSchedulesMap } = useScheduleContext();
+  const { updateSchedulesByTableId, schedulesMap } = useScheduleContext();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -197,23 +196,44 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     loaderWrapperRef.current?.scrollTo(0, 0);
   };
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
+      const { tableId, day = "월", time = 1 } = searchInfo;
 
-    const { tableId } = searchInfo;
+      const schedules = parseSchedule(lecture.schedule);
 
-    const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-      ...schedule,
-      lecture,
-    }));
+      if (schedules && schedules.length > 0) {
+        const newSchedules = schedules.map((schedule) => ({
+          lecture,
+          day: schedule.day,
+          range: schedule.range,
+          room: schedule.room,
+        }));
 
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+        const currentSchedules = schedulesMap[tableId] || [];
 
-    onClose();
-  };
+        updateSchedulesByTableId(tableId, [
+          ...currentSchedules,
+          ...newSchedules,
+        ]);
+      } else {
+        const currentSchedules = schedulesMap[tableId] || [];
+        updateSchedulesByTableId(tableId, [
+          ...currentSchedules,
+          {
+            lecture,
+            day,
+            range: [time, time + 1],
+            room: "미지정",
+          },
+        ]);
+      }
+
+      onClose();
+    },
+    [searchInfo, schedulesMap, updateSchedulesByTableId, onClose]
+  );
 
   useEffect(() => {
     const start = performance.now();
