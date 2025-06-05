@@ -85,7 +85,7 @@ const PAGE_SIZE = 100;
 
 function cachedFetchResult<T>(fetchFunc: () => Promise<AxiosResponse<T>>) {
   let result: Promise<T> | null = null;
-
+  console.log("result", result);
   return () => {
     if (!result) {
       result = fetchFunc()
@@ -108,15 +108,13 @@ const fetchLiberalArts = cachedFetchResult<Lecture[]>(() =>
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 const fetchAllLectures = async () => {
-  const majorsPromise = fetchMajors();
-  const liberalArtsPromise = fetchLiberalArts();
   return await Promise.all([
-    (console.log("API Call 1", performance.now()), majorsPromise),
-    (console.log("API Call 2", performance.now()), liberalArtsPromise),
-    (console.log("API Call 3", performance.now()), majorsPromise),
-    (console.log("API Call 4", performance.now()), liberalArtsPromise),
-    (console.log("API Call 5", performance.now()), majorsPromise),
-    (console.log("API Call 6", performance.now()), liberalArtsPromise),
+    (console.log("API Call 1", performance.now()), fetchMajors()),
+    (console.log("API Call 2", performance.now()), fetchLiberalArts()),
+    (console.log("API Call 3", performance.now()), fetchMajors()),
+    (console.log("API Call 4", performance.now()), fetchLiberalArts()),
+    (console.log("API Call 5", performance.now()), fetchMajors()),
+    (console.log("API Call 6", performance.now()), fetchLiberalArts()),
   ]);
 };
 
