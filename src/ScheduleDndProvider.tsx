@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// ScheduleDndProvider.tsx
 import {
 	DndContext,
 	Modifier,
@@ -11,6 +10,10 @@ import { PropsWithChildren, useCallback } from "react"
 import { CellSize, DAY_LABELS } from "./constants.ts"
 import { useScheduleContext } from "./ScheduleContext.tsx"
 
+/**
+ * createSnapModifier - Creates a modifier to snap the dragged item to a grid.
+ * @returns
+ */
 function createSnapModifier(): Modifier {
 	return ({ transform, containerNodeRect, draggingNodeRect }) => {
 		const containerTop = containerNodeRect?.top ?? 0
@@ -68,8 +71,8 @@ export const useDndContextValue = () => {
 			const { x, y } = delta
 			const [tableId, index] = active.id.split(":")
 
+			// 현재 드래그 중인 스케줄의 인덱스와 테이블 ID를 가져옴
 			setSchedulesMap((prevSchedulesMap) => {
-				// 현재 드래그 중인 스케줄만 찾아서 업데이트
 				const schedule = prevSchedulesMap[tableId][index]
 				const nowDayIndex = DAY_LABELS.indexOf(
 					schedule.day as (typeof DAY_LABELS)[number]
@@ -77,7 +80,7 @@ export const useDndContextValue = () => {
 				const moveDayIndex = Math.floor(x / 80)
 				const moveTimeIndex = Math.floor(y / 30)
 
-				// 해당 테이블의 스케줄만 업데이트하고 나머지는 그대로 유지
+				// 현재 요일 인덱스와 이동한 요일 인덱스를 계산하여 새로운 요일을 결정
 				const updatedSchedules = [...prevSchedulesMap[tableId]]
 				updatedSchedules[index] = {
 					...schedule,
@@ -97,6 +100,11 @@ export const useDndContextValue = () => {
 	return { sensors, handleDragEnd, modifiers }
 }
 
+/**
+ * ScheduleDndProvider - Context provider for drag-and-drop functionality in schedules.
+ * @param param0
+ * @returns
+ */
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
 	const { sensors, handleDragEnd, modifiers } = useDndContextValue()
 
