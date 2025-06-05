@@ -29,14 +29,16 @@ const ScheduleTables = () => {
   const handlers = useMemo(() => {
     console.log("갱신?");
     return tableKeys.map(
-      ([tableId]) =>
+      (tableId) =>
         [
           (timeInfo: DayTime) => setSearchInfo({ tableId, ...timeInfo }),
-          ({ day, time }: DayTime) =>
+          ({ day, time }: DayTime) => {
+            console.log(day, time, tableId);
             setSchedulesMap((prev) => ({
               ...prev,
               [tableId]: prev[tableId].filter((schedule) => schedule.day !== day || !schedule.range.includes(time)),
-            })),
+            }));
+          },
         ] as const
     );
   }, [setSchedulesMap, tableKeys]);
