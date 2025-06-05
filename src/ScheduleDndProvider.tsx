@@ -5,7 +5,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useCallback } from "react";
 import { CellSize, DAY_LABELS } from "./constants.ts";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 
@@ -56,7 +56,7 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
   );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = useCallback((event: any) => {
     const { active, delta } = event;
     const { x, y } = delta;
     const [tableId, index] = active.id.split(":");
@@ -80,7 +80,7 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
         };
       }),
     });
-  };
+  }, [schedulesMap, setSchedulesMap]);
 
   return (
     <DndContext
