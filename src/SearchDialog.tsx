@@ -35,6 +35,7 @@ import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
 import SearchClass from "./searchClass.tsx";
+import TimeSlotItem from './TimeSlotItem.tsx';
 interface Props {
   searchInfo: {
     tableId: string;
@@ -313,11 +314,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                   <Stack spacing={2} overflowY="auto" h="100px" border="1px solid" borderColor="gray.200"
                          borderRadius={5} p={2}>
                     {TIME_SLOTS.map(({ id, label }) => (
-                      <Box key={id}>
-                        <Checkbox key={id} size="sm" value={id}>
-                          {id}교시({label})
-                        </Checkbox>
-                      </Box>
+                      <TimeSlotItem
+                        key={id}
+                        id={id}
+                        label={label}
+                      />
                     ))}
                   </Stack>
                 </CheckboxGroup>
