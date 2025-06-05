@@ -167,29 +167,32 @@ const DraggableSchedule = memo(
     const { day, range, room, lecture } = data;
     const { attributes, setNodeRef, listeners, transform } = useDraggable({
       id,
+      data: {
+        type: "schedule",
+        schedule: data,
+      },
     });
     const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
     const topIndex = range[0] - 1;
     const size = range.length;
 
+    const style = {
+      position: "absolute" as const,
+      left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
+      top: `${40 + (topIndex * CellSize.HEIGHT + 1)}px`,
+      width: `${CellSize.WIDTH - 1}px`,
+      height: `${CellSize.HEIGHT * size - 1}px`,
+      backgroundColor: bg,
+      padding: "4px",
+      boxSizing: "border-box" as const,
+      cursor: "pointer",
+      transform: CSS.Translate.toString(transform),
+    };
+
     return (
       <Popover>
         <PopoverTrigger>
-          <Box
-            position="absolute"
-            left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-            top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-            width={CellSize.WIDTH - 1 + "px"}
-            height={CellSize.HEIGHT * size - 1 + "px"}
-            bg={bg}
-            p={1}
-            boxSizing="border-box"
-            cursor="pointer"
-            ref={setNodeRef}
-            transform={CSS.Translate.toString(transform)}
-            {...listeners}
-            {...attributes}
-          >
+          <Box ref={setNodeRef} {...style} {...listeners} {...attributes}>
             <Text fontSize="sm" fontWeight="bold">
               {lecture.title}
             </Text>
