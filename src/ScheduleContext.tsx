@@ -1,28 +1,56 @@
-import React, { createContext, PropsWithChildren, useContext, useState } from "react";
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useState,
+} from "react";
 import { Schedule } from "./types.ts";
 import dummyScheduleMap from "./dummyScheduleMap.ts";
 
-interface ScheduleContextType {
+interface SchedulesMapContextType {
   schedulesMap: Record<string, Schedule[]>;
-  setSchedulesMap: React.Dispatch<React.SetStateAction<Record<string, Schedule[]>>>;
 }
 
-const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
+interface SchedulesMapDispatchContextType {
+  setSchedulesMap: React.Dispatch<
+    React.SetStateAction<Record<string, Schedule[]>>
+  >;
+}
 
-export const useScheduleContext = () => {
-  const context = useContext(ScheduleContext);
+const SchedulesMapContext = createContext<SchedulesMapContextType | undefined>(
+  undefined
+);
+const SchedulesMapDispatchContext = createContext<
+  SchedulesMapDispatchContextType | undefined
+>(undefined);
+
+export const useSchedulesMap = () => {
+  const context = useContext(SchedulesMapContext);
   if (context === undefined) {
-    throw new Error('useSchedule must be used within a ScheduleProvider');
+    throw new Error("useSchedulesMap must be used within a ScheduleProvider");
+  }
+  return context;
+};
+
+export const useSchedulesMapDispatch = () => {
+  const context = useContext(SchedulesMapDispatchContext);
+  if (context === undefined) {
+    throw new Error(
+      "useSchedulesMapDispatch must be used within a ScheduleProvider"
+    );
   }
   return context;
 };
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
+  const [schedulesMap, setSchedulesMap] =
+    useState<Record<string, Schedule[]>>(dummyScheduleMap);
 
   return (
-    <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
-      {children}
-    </ScheduleContext.Provider>
+    <SchedulesMapContext.Provider value={{ schedulesMap }}>
+      <SchedulesMapDispatchContext.Provider value={{ setSchedulesMap }}>
+        {children}
+      </SchedulesMapDispatchContext.Provider>
+    </SchedulesMapContext.Provider>
   );
 };
