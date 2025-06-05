@@ -2,7 +2,7 @@ import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleTable from "./ScheduleTable.tsx";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import SearchDialog from "./SearchDialog.tsx";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useDndContext } from "@dnd-kit/core";
 import { ScheduleTableContextProvider } from "./ScheduleTableContext.tsx";
 
@@ -16,19 +16,25 @@ export const ScheduleTables = () => {
 
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
 
-  const duplicate = (targetId: string) => {
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]],
-    }));
-  };
+  const duplicate = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [`schedule-${Date.now()}`]: [...prev[targetId]],
+      }));
+    },
+    [setSchedulesMap]
+  );
 
-  const remove = (targetId: string) => {
-    setSchedulesMap((prev) => {
-      delete prev[targetId];
-      return { ...prev };
-    });
-  };
+  const remove = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => {
+        delete prev[targetId];
+        return { ...prev };
+      });
+    },
+    [setSchedulesMap]
+  );
 
   const dndContext = useDndContext();
   const activeTableId = useMemo(() => {
@@ -44,12 +50,16 @@ export const ScheduleTables = () => {
     [schedulesMap]
   );
 
-  const scheduleHandlers = useMemo(() => {
-    return schedulesEntries.map(([tableId]) => ({
-      handleScheduleTimeClick(timeInfo: { day: string; time: number }) {
-        setSearchInfo({ tableId, ...timeInfo });
-      },
-      handleDeleteButtonClick({ day, time }: { day: string; time: number }) {
+  const handleScheduleTimeClick = useCallback(
+    (tableId: string) => (timeInfo: { day: string; time: number }) => {
+      setSearchInfo({ tableId, ...timeInfo });
+    },
+    []
+  );
+
+  const handleDeleteButtonClick = useCallback(
+    (tableId: string) =>
+      ({ day, time }: { day: string; time: number }) => {
         setSchedulesMap((prev) => ({
           ...prev,
           [tableId]: prev[tableId].filter(
@@ -57,8 +67,15 @@ export const ScheduleTables = () => {
           ),
         }));
       },
+    [setSchedulesMap]
+  );
+
+  const scheduleHandlers = useMemo(() => {
+    return schedulesEntries.map(([tableId]) => ({
+      handleScheduleTimeClick: handleScheduleTimeClick(tableId),
+      handleDeleteButtonClick: handleDeleteButtonClick(tableId),
     }));
-  }, [schedulesEntries, setSchedulesMap]);
+  }, [schedulesEntries, handleScheduleTimeClick, handleDeleteButtonClick]);
 
   return (
     <>
