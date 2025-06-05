@@ -46,7 +46,6 @@ const TIMES = [
 ] as const;
 
 const ScheduleTable = ({ tableId, isActive, setSearchInfo }: Props) => {
-  console.log(`tableId: ${tableId}`);
   const schedules = useScheduleStoreSelector(tableId);
 
   const getColor = (lectureId: string): string => {
