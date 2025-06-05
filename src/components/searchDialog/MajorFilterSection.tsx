@@ -6,6 +6,7 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
+  CheckboxGroup,
 } from "@chakra-ui/react";
 import { MajorCheckboxList } from "./MajorCheckboxList";
 
@@ -20,21 +21,22 @@ export const MajorFilterSection = React.memo(
     return (
       <FormControl>
         <FormLabel>전공</FormLabel>
+        <CheckboxGroup colorScheme="green" value={selectedMajors}>
+          <Wrap spacing={1} mb={2}>
+            {selectedMajors.map((major) => (
+              <Tag key={major} size="sm" variant="outline" colorScheme="blue">
+                <TagLabel>{major.split("<p>").pop()}</TagLabel>
+                <TagCloseButton onClick={() => onToggle(major)} />
+              </Tag>
+            ))}
+          </Wrap>
 
-        <Wrap spacing={1} mb={2}>
-          {selectedMajors.map((major) => (
-            <Tag key={major} size="sm" variant="outline" colorScheme="blue">
-              <TagLabel>{major.split("<p>").pop()}</TagLabel>
-              <TagCloseButton onClick={() => onToggle(major)} />
-            </Tag>
-          ))}
-        </Wrap>
-
-        <MajorCheckboxList
-          majors={majors}
-          selectedMajors={selectedMajors}
-          onToggle={onToggle}
-        />
+          <MajorCheckboxList
+            majors={majors}
+            selectedMajors={selectedMajors}
+            onToggle={onToggle}
+          />
+        </CheckboxGroup>
       </FormControl>
     );
   }
