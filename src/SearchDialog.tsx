@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
@@ -86,16 +86,53 @@ const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
 const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
-const fetchAllLectures = async () => await Promise.all([
-  (console.log('API Call 1', performance.now()), await fetchMajors()),
-  (console.log('API Call 2', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 3', performance.now()), await fetchMajors()),
-  (console.log('API Call 4', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 5', performance.now()), await fetchMajors()),
-  (console.log('API Call 6', performance.now()), await fetchLiberalArts()),
-]);
+// 1. Promise.all 호출 전에 함수만 전달하고 await 은 밖에서 처리
+// 2. 클로저를 활용한 캐시로 최초 1회만 호출
+const createLectureFetcher = () => {
+  let majorsPromise: Promise<{ data: Lecture[] }> | null = null;
+  let liberalArtsPromise: Promise<{ data: Lecture[] }> | null = null;
+
+  const fetchMajorsCached = () => {
+    if (!majorsPromise) {
+      console.log('API Call: fetchMajors', performance.now());
+      majorsPromise = fetchMajors();
+    }
+    return majorsPromise;
+  };
+
+  const fetchLiberalArtsCached = () => {
+    if (!liberalArtsPromise) {
+      console.log('API Call: fetchLiberalArts', performance.now());
+      liberalArtsPromise = fetchLiberalArts();
+    }
+    return liberalArtsPromise;
+  };
+
+  return async () => {
+    // 병렬 호출, 캐시 사용
+    const [majors, liberalArts] = await Promise.all([
+      fetchMajorsCached(),
+      fetchLiberalArtsCached()
+    ]);
+
+    // 필요한 만큼 재사용
+    return [
+      majors,         // Call 1
+      liberalArts,    // Call 2
+      majors,         // Call 3
+      liberalArts,    // Call 4
+      majors,         // Call 5
+      liberalArts     // Call 6
+    ];
+  };
+};
+
+const fetchAllLectures = createLectureFetcher();
+
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
+// 1. useMemo, useCallback 사용
+// 2. API 중복 호출 방지
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const { setSchedulesMap } = useScheduleContext();
 
@@ -111,7 +148,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(lecture =>
@@ -135,20 +172,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
-  }
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
+  const lastPage = useMemo(() => Math.ceil(filteredLectures.length / PAGE_SIZE), [filteredLectures]);
+  const visibleLectures = useMemo(() => filteredLectures.slice(0, page * PAGE_SIZE), [filteredLectures, page]);
+  const allMajors = useMemo(() => [...new Set(lectures.map(lecture => lecture.major))], [lectures]);
 
-  const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+  const changeSearchOption = useCallback((field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
     setSearchOptions(({ ...searchOptions, [field]: value }));
     loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  }, [setPage, setSearchOptions, loaderWrapperRef, searchOptions]);
 
-  const addSchedule = (lecture: Lecture) => {
+  const addSchedule = useCallback((lecture: Lecture) => {
     if (!searchInfo) return;
 
     const { tableId } = searchInfo;
@@ -164,9 +200,16 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     }));
 
     onClose();
-  };
+  }, [searchInfo, setSchedulesMap, onClose]);
+
+
+  // Api 중복 호출 방지
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     const start = performance.now();
     console.log('API 호출 시작: ', start)
     fetchAllLectures().then(results => {
