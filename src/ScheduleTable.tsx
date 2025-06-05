@@ -18,7 +18,7 @@ import { fill2, parseHnM } from "./utils.ts";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment, memo, useMemo, useState } from "react";
-import { useScheduleTableContext } from "./ScheduleTableContextProvider";
+import { useScheduleTableContext } from "./ScheduleTableContext.tsx";
 
 interface Props {
   tableId: string;

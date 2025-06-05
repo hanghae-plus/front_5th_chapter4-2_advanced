@@ -4,7 +4,7 @@ import { useScheduleContext } from "./ScheduleContext.tsx";
 import SearchDialog from "./SearchDialog.tsx";
 import { useMemo, useState } from "react";
 import { useDndContext } from "@dnd-kit/core";
-import { ScheduleTableContextProvider } from "./ScheduleTableContextProvider.tsx";
+import { ScheduleTableContextProvider } from "./ScheduleTableContext.tsx";
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
