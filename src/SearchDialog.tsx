@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
-  Button,
   Checkbox,
   CheckboxGroup,
   FormControl,
@@ -21,7 +20,6 @@ import {
   TagCloseButton,
   TagLabel,
   Tbody,
-  Td,
   Text,
   Th,
   Thead,
@@ -132,7 +130,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = useCallback(() => {
+  const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(lecture =>
@@ -158,7 +156,6 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       });
   }, [lectures, searchOptions]);
 
-  const filteredLectures = useMemo(() => getFilteredLectures(), [getFilteredLectures]);
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = useMemo(() => 
     filteredLectures.slice(0, page * PAGE_SIZE)
