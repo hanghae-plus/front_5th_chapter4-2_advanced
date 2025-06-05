@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, memo } from "react";
+import { ComponentProps, memo, useState } from "react";
 
 // DraggableSchedule memo 사용
 type DraggableScheduleProps = { id: string; data: Schedule } & ComponentProps<typeof Box> & {
@@ -25,32 +25,37 @@ export const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick, ...p
   const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
   const topIndex = range[0] - 1;
   const size = range.length;
+  const [isOpen, setIsOpen] = useState(false);
+
+  const Cell = (
+    <Box
+      position="absolute"
+      left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
+      top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
+      width={CellSize.WIDTH - 1 + "px"}
+      height={CellSize.HEIGHT * size - 1 + "px"}
+      bg={bg}
+      p={1}
+      boxSizing="border-box"
+      cursor="pointer"
+      ref={setNodeRef}
+      transform={CSS.Translate.toString(transform)}
+      onClick={() => setIsOpen((p) => !p)}
+      {...listeners}
+      {...attributes}
+      {...props}
+    >
+      <Text fontSize="sm" fontWeight="bold">
+        {lecture.title}
+      </Text>
+      <Text fontSize="xs">{room}</Text>
+    </Box>
+  );
+  if (!isOpen) return Cell;
   return (
-    <Popover>
-      <PopoverTrigger>
-        <Box
-          position="absolute"
-          left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-          top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-          width={CellSize.WIDTH - 1 + "px"}
-          height={CellSize.HEIGHT * size - 1 + "px"}
-          bg={bg}
-          p={1}
-          boxSizing="border-box"
-          cursor="pointer"
-          ref={setNodeRef}
-          transform={CSS.Translate.toString(transform)}
-          {...listeners}
-          {...attributes}
-          {...props}
-        >
-          <Text fontSize="sm" fontWeight="bold">
-            {lecture.title}
-          </Text>
-          <Text fontSize="xs">{room}</Text>
-        </Box>
-      </PopoverTrigger>
-      <PopoverContent onClick={(event) => event.stopPropagation()}>
+    <Popover isOpen={isOpen}>
+      <PopoverTrigger>{Cell}</PopoverTrigger>
+      <PopoverContent onClick={(event) => event.stopPropagation()} onMouseLeave={() => setIsOpen(false)}>
         <PopoverArrow />
         <PopoverCloseButton />
         <PopoverBody>
