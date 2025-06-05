@@ -5,7 +5,7 @@ import {
   useSchedulesMapDispatch,
 } from "./ScheduleContext.tsx";
 import SearchDialog from "./SearchDialog.tsx";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 export const ScheduleTables = () => {
   const { schedulesMap } = useSchedulesMap();
@@ -18,19 +18,48 @@ export const ScheduleTables = () => {
 
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
 
-  const duplicate = (targetId: string) => {
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]],
-    }));
-  };
+  const duplicate = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [`schedule-${Date.now()}`]: [...prev[targetId]],
+      }));
+    },
+    [setSchedulesMap]
+  );
 
-  const remove = (targetId: string) => {
-    setSchedulesMap((prev) => {
-      delete prev[targetId];
-      return { ...prev };
-    });
-  };
+  const remove = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => {
+        delete prev[targetId];
+        return { ...prev };
+      });
+    },
+    [setSchedulesMap]
+  );
+
+  const handleScheduleTimeClick = useCallback(
+    (timeInfo: { day: string; time: number }, tableId: string) => {
+      setSearchInfo({ tableId, ...timeInfo });
+    },
+    []
+  );
+
+  const handleDeleteButtonClick = useCallback(
+    ({ day, time }: { day: string; time: number }, tableId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [tableId]: prev[tableId].filter(
+          (schedule) => schedule.day !== day || !schedule.range.includes(time)
+        ),
+      }));
+    },
+    [setSchedulesMap]
+  );
+
+  const handleSearchDialogClose = useCallback(() => {
+    setSearchInfo(null);
+  }, []);
 
   return (
     <>
@@ -69,25 +98,16 @@ export const ScheduleTables = () => {
               schedules={schedules}
               tableId={tableId}
               onScheduleTimeClick={(timeInfo) =>
-                setSearchInfo({ tableId, ...timeInfo })
+                handleScheduleTimeClick(timeInfo, tableId)
               }
-              onDeleteButtonClick={({ day, time }) =>
-                setSchedulesMap((prev) => ({
-                  ...prev,
-                  [tableId]: prev[tableId].filter(
-                    (schedule) =>
-                      schedule.day !== day || !schedule.range.includes(time)
-                  ),
-                }))
+              onDeleteButtonClick={(timeInfo) =>
+                handleDeleteButtonClick(timeInfo, tableId)
               }
             />
           </Stack>
         ))}
       </Flex>
-      <SearchDialog
-        searchInfo={searchInfo}
-        onClose={() => setSearchInfo(null)}
-      />
+      <SearchDialog searchInfo={searchInfo} onClose={handleSearchDialogClose} />
     </>
   );
 };
