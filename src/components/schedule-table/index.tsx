@@ -16,7 +16,7 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
     }, {} as Record<string, string>);
   }, [schedules]);
 
-  const handleDelete = useMemo(
+  const onDeleteButtonClick = useMemo(
     () => schedules.map((s) => () => handlers({ day: s.day, time: s.range[0] })),
     [schedules, handlers]
   );
@@ -28,10 +28,10 @@ const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
         id={`${tableId}:${index}`}
         data={schedule}
         bg={colorMap[schedule.lecture.id]}
-        onDeleteButtonClick={handleDelete[index]}
+        onDeleteButtonClick={onDeleteButtonClick[index]}
       />
     ));
-  }, [schedules, tableId, colorMap, handleDelete]);
+  }, [schedules, tableId, colorMap, onDeleteButtonClick]);
 
   return (
     <Box position="relative" outline={isActive ? "5px dashed" : undefined} outlineColor="blue.300">

@@ -13,13 +13,13 @@ import {
 } from "@chakra-ui/react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, memo, useCallback, useState } from "react";
+import { ComponentProps, memo, useState } from "react";
 
 // DraggableSchedule memo 사용
 type DraggableScheduleProps = { id: string; data: Schedule } & ComponentProps<typeof Box> & {
     onDeleteButtonClick: () => void;
   };
-export const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick }: DraggableScheduleProps) => {
+export const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick, ...props }: DraggableScheduleProps) => {
   const { day, range, room, lecture } = data;
   const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
   const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
@@ -27,14 +27,6 @@ export const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick }: Dr
   const size = range.length;
 
   const [isEnabled, setIsEnabled] = useState(false);
-
-  const handleMouseEnter = useCallback(() => {
-    setIsEnabled(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsEnabled(false);
-  }, []);
 
   const Item = (
     <Box
@@ -49,10 +41,11 @@ export const DraggableSchedule = memo(({ id, data, bg, onDeleteButtonClick }: Dr
       cursor="pointer"
       ref={setNodeRef}
       transform={CSS.Translate.toString(transform)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsEnabled(true)}
+      onMouseLeave={() => setIsEnabled(false)}
       {...listeners}
       {...attributes}
+      {...props}
     >
       <Text fontSize="sm" fontWeight="bold">
         {lecture.title}

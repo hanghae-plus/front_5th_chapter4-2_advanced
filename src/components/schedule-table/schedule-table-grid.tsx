@@ -10,49 +10,44 @@ export const ScheduleTableGrid = memo(() => {
 
   const dayLabels = useMemo(() => {
     return DAY_LABELS.map((day) => {
-      const Days = memo(() => {
-        return (
-          <GridItem borderLeft="1px" borderColor="gray.300" bg="gray.100">
-            <Flex justifyContent="center" alignItems="center" h="full">
-              <Text fontWeight="bold">{day}</Text>
-            </Flex>
-          </GridItem>
-        );
-      });
+      const Days = memo(() => (
+        <GridItem borderLeft="1px" borderColor="gray.300" bg="gray.100">
+          <Flex justifyContent="center" alignItems="center" h="full">
+            <Text fontWeight="bold">{day}</Text>
+          </Flex>
+        </GridItem>
+      ));
+
       return <Days key={day} />;
     });
   }, []);
 
   const scheduleTimes = useMemo(() => {
     return SCHEDULE_TIMES.map((time, timeIndex) => {
-      const Frag = memo(() => {
-        return (
-          <Fragment>
-            <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
-              <Flex justifyContent="center" alignItems="center" h="full">
-                <Text fontSize="xs">
-                  {fill2(timeIndex + 1)} ({time})
-                </Text>
-              </Flex>
-            </GridItem>
-            {DAY_LABELS.map((day) => {
-              const Grid = memo(() => {
-                return (
-                  <GridItem
-                    borderWidth="1px 0 0 1px"
-                    borderColor="gray.300"
-                    bg={timeIndex > 17 ? "gray.100" : "white"}
-                    cursor="pointer"
-                    _hover={{ bg: "yellow.100" }}
-                    onClick={() => handleScheduleTimeClick({ day, time: timeIndex + 1 })}
-                  />
-                );
-              });
-              return <Grid key={`${day}-${timeIndex + 2}`} />;
-            })}
-          </Fragment>
-        );
-      });
+      const Frag = memo(() => (
+        <Fragment>
+          <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
+            <Flex justifyContent="center" alignItems="center" h="full">
+              <Text fontSize="xs">
+                {fill2(timeIndex + 1)} ({time})
+              </Text>
+            </Flex>
+          </GridItem>
+          {DAY_LABELS.map((day) => {
+            const Grid = memo(() => (
+              <GridItem
+                borderWidth="1px 0 0 1px"
+                borderColor="gray.300"
+                bg={timeIndex > 17 ? "gray.100" : "white"}
+                cursor="pointer"
+                _hover={{ bg: "yellow.100" }}
+                onClick={() => handleScheduleTimeClick({ day, time: timeIndex + 1 })}
+              />
+            ));
+            return <Grid key={`${day}-${timeIndex + 2}`} />;
+          })}
+        </Fragment>
+      ));
       return <Frag key={`시간-${timeIndex + 1}`} />;
     });
   }, [handleScheduleTimeClick]);
