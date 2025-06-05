@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { CellSize, DAY_LABELS, 분 } from "../../constants.ts";
 import { Schedule } from "../../types.ts";
-import { fill2, parseHnM } from "../../utils.ts";
+import { fill2, parseHnM } from "../../lib/utils.ts";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment } from "react";

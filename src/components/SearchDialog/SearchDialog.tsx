@@ -20,7 +20,7 @@ import TimeSelect from "./TimeSelect";
 import { useScheduleContext } from "@/providers/ScheduleContext";
 import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
-import { parseSchedule } from "@/utils.ts";
+import { parseSchedule } from "@/lib/utils";
 import { SearchOption } from "@/types.ts";
 
 interface Props {
