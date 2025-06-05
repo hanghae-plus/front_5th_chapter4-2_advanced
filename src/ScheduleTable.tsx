@@ -9,11 +9,12 @@ import {
 import { CellSize, DAY_LABELS, 분 } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
-import { useDndContext, useDraggable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Fragment, useCallback, useMemo } from "react";
 import React from "react";
 import { useDialog } from "./DialogContext.tsx";
+import { useTableDndState } from "./hooks/useTableDndState.ts";
 
 interface Props {
   tableId: string;
@@ -118,24 +119,26 @@ const EmptyCell = React.memo(
 );
 
 const TableOutline = React.memo(
-  ({ tableId, children }: { tableId: string; children: React.ReactNode }) => {
-    const dndContext = useDndContext();
-
-    const isCurrentTableActive = useMemo(() => {
-      const activeId = dndContext.active?.id;
-      if (!activeId) return false;
-      return String(activeId).startsWith(`${tableId}:`);
-    }, [dndContext.active?.id, tableId]);
-
+  ({
+    isActive,
+    children,
+  }: {
+    tableId: string;
+    isActive: boolean;
+    children: React.ReactNode;
+  }) => {
     return (
       <Box
         position="relative"
-        outline={isCurrentTableActive ? "5px dashed" : undefined}
+        outline={isActive ? "5px dashed" : undefined}
         outlineColor="blue.300"
       >
         {children}
       </Box>
     );
+  },
+  (prevProps, nextProps) => {
+    return prevProps.isActive === nextProps.isActive;
   },
 );
 
@@ -197,6 +200,8 @@ const ScheduleContent = React.memo(
 
 const ScheduleTable = React.memo(
   ({ tableId, schedules, onScheduleTimeClick }: Props) => {
+    const isCurrentTableActive = useTableDndState(tableId);
+
     const lectureColors = useMemo(() => {
       const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
       const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
@@ -226,7 +231,10 @@ const ScheduleTable = React.memo(
     );
 
     return (
-      <TableOutline tableId={tableId}>
+      <TableOutline
+        tableId={tableId}
+        isActive={isCurrentTableActive}
+      >
         <StaticGrid onScheduleTimeClick={onScheduleTimeClick} />
         {schedules.map((schedule, index) => (
           <DraggableSchedule
