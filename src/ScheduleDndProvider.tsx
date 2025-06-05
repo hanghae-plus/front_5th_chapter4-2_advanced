@@ -54,7 +54,6 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
       },
     })
   );
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = (event: any) => {
     const { active, delta } = event;
@@ -67,18 +66,14 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
     const moveDayIndex = Math.floor(x / 80);
     const moveTimeIndex = Math.floor(y / 30);
 
-    setSchedulesMap({
-      ...schedulesMap,
-      [tableId]: schedulesMap[tableId].map((targetSchedule, targetIndex) => {
-        if (targetIndex !== Number(index)) {
-          return { ...targetSchedule };
-        }
-        return {
-          ...targetSchedule,
-          day: DAY_LABELS[nowDayIndex + moveDayIndex],
-          range: targetSchedule.range.map((time) => time + moveTimeIndex),
-        };
-      }),
+    setSchedulesMap((prev) => {
+      prev[tableId][index] = {
+        ...prev[tableId][index],
+        day: DAY_LABELS[nowDayIndex + moveDayIndex],
+        range: prev[tableId][index].range.map((time) => time + moveTimeIndex),
+      };
+
+      return prev;
     });
   };
 
