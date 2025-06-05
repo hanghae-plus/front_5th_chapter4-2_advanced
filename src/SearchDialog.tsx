@@ -30,7 +30,7 @@ import {
   Wrap
 } from "@chakra-ui/react";
 import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
+import { Lecture, Schedule } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
@@ -245,7 +245,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
       setSchedulesMap((prev) => ({
         ...prev,
-        [tableId]: [...prev[tableId], ...schedules]
+        [tableId]: [...prev[tableId], ...(schedules as Schedule[])]
       }));
 
       onClose();

@@ -1,4 +1,6 @@
-export default {
+import { Schedule } from "./types";
+
+const dummyScheduleMap: Record<string, Schedule[]> = {
   "schedule-1": [
     {
       day: "월",
@@ -493,3 +495,5 @@ export default {
     }
   ]
 };
+
+export default dummyScheduleMap;
