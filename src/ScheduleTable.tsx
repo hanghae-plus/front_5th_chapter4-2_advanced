@@ -17,7 +17,7 @@ import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
 import { useDndContext, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment } from "react";
+import {ComponentProps, Fragment, memo, useMemo} from "react";
 
 interface Props {
   tableId: string;
@@ -38,7 +38,7 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
-const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
+const ScheduleTable = memo(({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
 
   const getColor = (lectureId: string): string => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
@@ -125,21 +125,16 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
       ))}
     </Box>
   );
-};
+})
 
-const DraggableSchedule = ({
- id,
- data,
- bg,
- onDeleteButtonClick
-}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
+const DraggableSchedule = memo(({id, data, bg, onDeleteButtonClick}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
   onDeleteButtonClick: () => void
 }) => {
   const { day, range, room, lecture } = data;
   const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
-  const leftIndex = DAY_LABELS.indexOf(day as typeof DAY_LABELS[number]);
-  const topIndex = range[0] - 1;
-  const size = range.length;
+  const leftIndex = useMemo(() => DAY_LABELS.indexOf(day as typeof DAY_LABELS[number]), [day]);
+  const topIndex = useMemo(() => range[0] - 1, [range]);
+  const size = useMemo(() => range.length, [range]);
 
   return (
     <Popover>
@@ -175,6 +170,6 @@ const DraggableSchedule = ({
       </PopoverContent>
     </Popover>
   );
-}
+})
 
 export default ScheduleTable;
