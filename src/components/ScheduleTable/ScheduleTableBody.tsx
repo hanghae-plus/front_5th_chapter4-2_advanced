@@ -20,7 +20,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment } from "react";
 
-interface Props {
+interface ScheduleTableBodyProps {
   tableId: string;
   schedules: Schedule[];
   isActive: boolean;
@@ -46,13 +46,13 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
-const ScheduleTable = ({
+const ScheduleTableBody = ({
   tableId,
   schedules,
   isActive,
   onScheduleTimeClick,
   onDeleteButtonClick,
-}: Props) => {
+}: ScheduleTableBodyProps) => {
   const getColor = (lectureId: string): string => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
@@ -204,4 +204,4 @@ const DraggableSchedule = ({
   );
 };
 
-export default memo(ScheduleTable);
+export default memo(ScheduleTableBody);

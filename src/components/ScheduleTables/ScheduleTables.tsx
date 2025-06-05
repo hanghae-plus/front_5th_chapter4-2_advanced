@@ -1,5 +1,5 @@
 import { Flex, Stack } from "@chakra-ui/react";
-import { ScheduleTable, ScheduleTableHeader } from "../ScheduleTable";
+import { ScheduleTableBody, ScheduleTableHeader } from "../ScheduleTable";
 import { useScheduleContext } from "@/providers/ScheduleContext";
 import { SearchDialog } from "@/components/SearchDialog";
 import { useCallback, useMemo, useState } from "react";
@@ -90,7 +90,7 @@ const ScheduleTables = () => {
               onDuplicateScheduleClick={handleDuplicateScheduleClick}
               onRemoveScheduleClick={handleRemoveScheduleClick}
             />
-            <ScheduleTable
+            <ScheduleTableBody
               key={`schedule-table-${index}`}
               schedules={schedules}
               tableId={tableId}
