@@ -1,4 +1,4 @@
-import React, { createContext, PropsWithChildren, useContext, useState, useCallback } from "react";
+import { createContext, PropsWithChildren, useContext, useState, useCallback } from "react";
 import { Schedule } from "./types.ts";
 import dummyScheduleMap from "./dummyScheduleMap.ts";
 
