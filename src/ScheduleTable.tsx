@@ -181,6 +181,20 @@ const StaticGrid = React.memo(
   ),
 );
 
+const ScheduleContent = React.memo(
+  ({ title, room }: { title: string; room: string }) => (
+    <>
+      <Text
+        fontSize="sm"
+        fontWeight="bold"
+      >
+        {title}
+      </Text>
+      <Text fontSize="xs">{room}</Text>
+    </>
+  ),
+);
+
 const ScheduleTable = React.memo(
   ({ tableId, schedules, onScheduleTimeClick }: Props) => {
     const lectureColors = useMemo(() => {
@@ -203,8 +217,12 @@ const ScheduleTable = React.memo(
     );
 
     const scheduleKeys = useMemo(
-      () => schedules.map((_, index) => `${tableId}-${index}`),
-      [schedules.length, tableId],
+      () =>
+        schedules.map(
+          (schedule, index) =>
+            `${tableId}-${schedule.lecture?.id || "unknown"}-${index}`,
+        ),
+      [schedules, tableId],
     );
 
     return (
@@ -215,7 +233,7 @@ const ScheduleTable = React.memo(
             key={scheduleKeys[index]}
             id={`${tableId}:${index}`}
             data={schedule}
-            bg={getColor(schedule.lecture.id)}
+            bg={getColor(schedule.lecture.id || "")}
             tableId={tableId}
           />
         ))}
@@ -254,7 +272,7 @@ const DraggableSchedule = React.memo(
         width: `${CellSize.WIDTH - 1}px`,
         height: `${CellSize.HEIGHT * size - 1}px`,
       };
-    }, [day, range]);
+    }, [day, range[0], range.length]);
 
     const handleClick = useCallback(
       (event: React.MouseEvent) => {
@@ -266,14 +284,6 @@ const DraggableSchedule = React.memo(
         });
       },
       [showDeleteDialog, tableId, data.day, data.range],
-    );
-
-    const textContent = useMemo(
-      () => ({
-        title: lecture.title,
-        room: room,
-      }),
-      [lecture.title, room],
     );
 
     return (
@@ -291,15 +301,10 @@ const DraggableSchedule = React.memo(
         {...listeners}
         {...attributes}
       >
-        <>
-          <Text
-            fontSize="sm"
-            fontWeight="bold"
-          >
-            {textContent.title}
-          </Text>
-          <Text fontSize="xs">{textContent.room}</Text>
-        </>
+        <ScheduleContent
+          title={lecture.title}
+          room={room || ""}
+        />
       </Box>
     );
   },
@@ -307,10 +312,12 @@ const DraggableSchedule = React.memo(
     return (
       prevProps.id === nextProps.id &&
       prevProps.bg === nextProps.bg &&
+      prevProps.tableId === nextProps.tableId &&
       prevProps.data.day === nextProps.data.day &&
       prevProps.data.range.length === nextProps.data.range.length &&
       prevProps.data.range[0] === nextProps.data.range[0] &&
       prevProps.data.lecture.id === nextProps.data.lecture.id &&
+      prevProps.data.lecture.title === nextProps.data.lecture.title &&
       prevProps.data.room === nextProps.data.room
     );
   },
