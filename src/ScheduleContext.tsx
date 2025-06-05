@@ -1,28 +1,52 @@
-import React, { createContext, PropsWithChildren, useContext, useState } from "react";
-import { Schedule } from "./types.ts";
-import dummyScheduleMap from "./dummyScheduleMap.ts";
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useState,
+} from "react";
+import { Schedule } from "./types";
+import dummyScheduleMap from "./dummyScheduleMap";
 
-interface ScheduleContextType {
-  schedulesMap: Record<string, Schedule[]>;
-  setSchedulesMap: React.Dispatch<React.SetStateAction<Record<string, Schedule[]>>>;
-}
+type SchedulseType = Record<string, Schedule[]>;
 
-const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
+const ScheduleStateContext = createContext<SchedulseType | undefined>(
+  undefined
+);
 
-export const useScheduleContext = () => {
-  const context = useContext(ScheduleContext);
-  if (context === undefined) {
-    throw new Error('useSchedule must be used within a ScheduleProvider');
+const ScheduleActionsContext = createContext<
+  React.Dispatch<React.SetStateAction<SchedulseType>> | undefined
+>(undefined);
+
+export const useScheduleState = () => {
+  const context = useContext(ScheduleStateContext);
+  if (!context) {
+    throw new Error(
+      "[useScheduleState] ScheduleProvider 내에서만 사용해야 합니다."
+    );
   }
   return context;
 };
 
+export const useScheduleActions = () => {
+  const context = useContext(ScheduleActionsContext);
+  if (!context) {
+    throw new Error(
+      "[useScheduleActions] ScheduleProvider 내에서만 사용해야 합니다."
+    );
+  }
+  return context;
+};
+
+// Provider 컴포넌트
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
+  const [schedulesMap, setSchedulesMap] =
+    useState<SchedulseType>(dummyScheduleMap);
 
   return (
-    <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
-      {children}
-    </ScheduleContext.Provider>
+    <ScheduleStateContext.Provider value={schedulesMap}>
+      <ScheduleActionsContext.Provider value={setSchedulesMap}>
+        {children}
+      </ScheduleActionsContext.Provider>
+    </ScheduleStateContext.Provider>
   );
 };

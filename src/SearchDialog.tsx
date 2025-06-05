@@ -26,8 +26,8 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
+import { useScheduleActions } from "./ScheduleContext.tsx";
+import { Lecture } from "./types";
 import { parseSchedule } from "./utils.ts";
 import axios from "axios";
 import { DAY_LABELS } from "./constants.ts";
@@ -112,10 +112,10 @@ const fetchAllLectures = async () => {
   const results = await Promise.all([
     cachedFetch(1, "majors", fetchMajors),
     cachedFetch(2, "liberalArts", fetchLiberalArts),
-    cachedFetch(3, "majors", fetchMajors),
-    cachedFetch(4, "liberalArts", fetchLiberalArts),
-    cachedFetch(5, "majors", fetchMajors),
-    cachedFetch(6, "liberalArts", fetchLiberalArts),
+    // cachedFetch(3, "majors", fetchMajors),
+    // cachedFetch(4, "liberalArts", fetchLiberalArts),
+    // cachedFetch(5, "majors", fetchMajors),
+    // cachedFetch(6, "liberalArts", fetchLiberalArts),
   ]);
 
   return results;
@@ -123,10 +123,11 @@ const fetchAllLectures = async () => {
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const { setSchedulesMap } = useScheduleContext();
+  const setSchedulesMap = useScheduleActions();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
+
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [page, setPage] = useState(1);
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
@@ -176,11 +177,16 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       });
   }, [lectures, searchOptions]);
 
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+  const lastPage = useMemo(
+    () => Math.ceil(filteredLectures.length / PAGE_SIZE),
+    [filteredLectures]
+  );
+
   const visibleLectures = useMemo(
     () => filteredLectures.slice(0, page * PAGE_SIZE),
     [filteredLectures, page]
   );
+
   const allMajors = useMemo(() => {
     return [...new Set(lectures.map((lecture) => lecture.major))];
   }, [lectures]);
@@ -221,11 +227,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   useEffect(() => {
     const start = performance.now();
     console.log("API 호출 시작: ", start);
+
     fetchAllLectures().then((results) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
-      setLectures(results.flatMap((result) => result.data));
+
+      const merged = results.flatMap((res) => res.data);
+
+      const deduplicated = Array.from(
+        new Map(merged.map((item) => [item.id, item])).values()
+      );
+
+      setLectures(deduplicated);
     });
   }, []);
 
@@ -283,7 +297,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 <Select
                   value={searchOptions.credits}
                   onChange={(e) =>
-                    changeSearchOption("credits", e.target.value)
+                    changeSearchOption(
+                      "credits",
+                      e.target.value === "" ? undefined : Number(e.target.value)
+                    )
                   }
                 >
                   <option value="">전체</option>

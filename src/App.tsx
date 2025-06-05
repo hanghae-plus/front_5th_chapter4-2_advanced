@@ -4,12 +4,13 @@ import { ScheduleTables } from "./ScheduleTables.tsx";
 import ScheduleDndProvider from "./ScheduleDndProvider.tsx";
 
 function App() {
-
   return (
     <ChakraProvider>
       <ScheduleProvider>
         <ScheduleDndProvider>
-          <ScheduleTables/>
+          {({ activeTableId }) => (
+            <ScheduleTables activeTableId={activeTableId} />
+          )}
         </ScheduleDndProvider>
       </ScheduleProvider>
     </ChakraProvider>
