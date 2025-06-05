@@ -2,6 +2,11 @@
 
 https://front-5th-chapter4-2-advanced-alpha.vercel.app/
 
+|전 |후|
+|-----|------|
+|![alt text](image.png)|![](image-1.png)|
+
+
 ## Page Speed Insight 에서 비교
 [모바일](https://pagespeed.web.dev/analysis/https-front-5th-chapter4-2-advanced-alpha-vercel-app/v5fzg4g7kn?form_factor=mobile) | [데스크탑](https://pagespeed.web.dev/analysis/https-front-5th-chapter4-2-advanced-alpha-vercel-app/v5fzg4g7kn?form_factor=desktop)
 ||최적화 전|최적화 후|

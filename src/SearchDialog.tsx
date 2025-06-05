@@ -59,41 +59,40 @@ interface ApiResponse<T> {
   status: number;
 }
 
-const cachedFetch = (fetchFn: () => Promise<ApiResponse<Lecture[]>>) => {
-  const state: {
-    cache: ApiResponse<Lecture[]> | null;
-    promise: Promise<ApiResponse<Lecture[]>> | null;
-  } = { cache: null, promise: null };
-  return async (): Promise<ApiResponse<Lecture[]>> => {
-    if (state.cache)return state.cache;
-    if (state.promise) return state.promise;
-    state.promise = fetchFn().then(res => {
-      state.cache = res;   
-      state.promise = null; 
-      return res;
-    });
+const cachedApi = new Map<string, ApiResponse<Lecture[]>>();
 
-    return state.promise;
+const cachedFetch = (fetchFn: () => Promise<ApiResponse<Lecture[]>>): Promise<ApiResponse<Lecture[]>> => {
+  const key = fetchFn.name;
+  if (cachedApi.has(key)) {
+    const cached = cachedApi.get(key);
+    if (cached) return Promise.resolve(cached);
   }
+
+  const promise = fetchFn().then(res => {
+    cachedApi.set(key, res);
+    return res;
+  });
+
+  return promise;
 }
 
-const fetchMajors = async () =>  await axios.get<Lecture[]>('/schedules-majors.json') as ApiResponse<Lecture[]>;
-const fetchLiberalArts = async () => await axios.get<Lecture[]>('/schedules-liberal-arts.json');
+const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json') 
+const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json')
 
-const cachedFetchMajors = cachedFetch(fetchMajors);
-const cachedFetchLiberalArts = cachedFetch(fetchLiberalArts);
+const cachedFetchMajors = () => cachedFetch(fetchMajors);
+const cachedFetchLiberalArts = () => cachedFetch(fetchLiberalArts);
 
-// TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 const fetchAllLectures = async () => {
-  
-  return Promise.all([
-    cachedFetchMajors().then(res => (console.log('API Call 1', performance.now()), res)),
-    cachedFetchLiberalArts().then(res => (console.log('API Call 2', performance.now()), res)),
-    cachedFetchMajors().then(res => (console.log('API Call 3', performance.now()), res)),
-    cachedFetchLiberalArts().then(res => (console.log('API Call 4', performance.now()), res)),
-    cachedFetchMajors().then(res => (console.log('API Call 5', performance.now()), res)),
-    cachedFetchLiberalArts().then(res => (console.log('API Call 6', performance.now()), res)),
-  ])
+  console.log('병렬 API 호출 시작', performance.now());
+  const promises = [
+    cachedFetchMajors().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 1', performance.now()), res)),
+    cachedFetchLiberalArts().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 2', performance.now()), res)),
+    cachedFetchMajors().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 3', performance.now()), res)),
+    cachedFetchLiberalArts().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 4', performance.now()), res)),
+    cachedFetchMajors().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 5', performance.now()), res)),
+    cachedFetchLiberalArts().then((res: ApiResponse<Lecture[]>) => (console.log('API Call 6', performance.now()), res)),
+  ];
+  return Promise.all(promises)
 }
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
