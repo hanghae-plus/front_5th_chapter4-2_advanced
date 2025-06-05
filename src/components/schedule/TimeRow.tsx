@@ -1,7 +1,7 @@
 import { Flex, GridItem, Text } from "@chakra-ui/react";
 import React, { Fragment } from "react";
-import { DAY_LABELS } from "../constants";
-import { fill2 } from "../utils";
+import { DAY_LABELS } from "../../consts";
+import { fill2 } from "../../utils/utils";
 
 interface TimeRowProps {
   timeIndex: number;

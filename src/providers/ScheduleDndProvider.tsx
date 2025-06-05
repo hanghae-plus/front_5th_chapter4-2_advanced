@@ -1,6 +1,6 @@
 import { DndContext } from "@dnd-kit/core";
 import { PropsWithChildren } from "react";
-import { useDndContextValue } from "./useDndContextValue";
+import { useDndContextValue } from "../hooks/useDndContextValue";
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
   const { sensors, handleDragEnd, modifiers } = useDndContextValue();

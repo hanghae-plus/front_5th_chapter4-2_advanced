@@ -1,5 +1,5 @@
-import { SearchOption } from "./SearchDialog";
-import { Lecture } from "./types";
+import { SearchOption } from "../SearchDialog";
+import { Lecture } from "../types";
 import { parseSchedule } from "./utils";
 
 export const getFilteredLectures = (

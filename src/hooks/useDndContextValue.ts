@@ -1,8 +1,8 @@
 import { PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { useScheduleContext } from "./ScheduleContext";
-import { DAY_LABELS } from "./constants";
+import { useScheduleContext } from "../providers/ScheduleContext";
+import { DAY_LABELS } from "../consts";
 import { useCallback } from "react";
-import { createSnapModifier } from "./createSnapModifier";
+import { createSnapModifier } from "../utils/createSnapModifier";
 
 export const useDndContextValue = () => {
   const modifiers = [createSnapModifier()];

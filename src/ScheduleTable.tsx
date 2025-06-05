@@ -1,9 +1,11 @@
-import { Schedule } from "./types.ts";
+import { Schedule } from "./types";
 import { useDndContext } from "@dnd-kit/core";
 import { useCallback, useMemo } from "react";
-import { TableContainer } from "./components/TableContainer.tsx";
-import { TableGrid } from "./components/TableGrid.tsx";
-import { DraggableSchedule } from "./components/DraggableSchedule.tsx";
+import {
+  TableGrid,
+  TableContainer,
+  DraggableSchedule,
+} from "./components/schedule";
 
 interface ScheduleTableProps {
   tableId: string;

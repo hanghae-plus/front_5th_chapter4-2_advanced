@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
-import { Schedule } from "../types";
+import { Schedule } from "../../types";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { CellSize, DAY_LABELS } from "../constants";
+import { CellSize, DAY_LABELS } from "../../consts";
 import { ScheduleContent } from "./ScheduleContent";
 import {
   Box,

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { Lecture } from "./types";
+import { Lecture } from "../types";
 import axios from "axios";
 
 export const useLectureFetcher = () => {

@@ -1,5 +1,5 @@
 import { Modifier } from "@dnd-kit/core";
-import { CellSize } from "./constants";
+import { CellSize } from "../consts";
 
 export const createSnapModifier = (): Modifier => {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {

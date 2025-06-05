@@ -27,12 +27,12 @@ import {
   VStack,
   Wrap,
 } from "@chakra-ui/react";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import { Lecture } from "./types.ts";
-import { parseSchedule } from "./utils.ts";
-import { DAY_LABELS } from "./constants.ts";
-import { useLectureFetcher } from "./useLectureFetcher.ts";
-import { getFilteredLectures } from "./getFilteredLectures.ts";
+import { useScheduleContext } from "./providers/ScheduleContext";
+import { Lecture } from "./types";
+import { parseSchedule } from "./utils/utils";
+import { DAY_LABELS } from "./consts";
+import { useLectureFetcher } from "./hooks/useLectureFetcher";
+import { getFilteredLectures } from "./utils/getFilteredLectures";
 import {
   MajorFilterSection,
   LectureRow,

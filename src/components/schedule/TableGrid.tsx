@@ -1,10 +1,9 @@
 import { Grid } from "@chakra-ui/react";
 import React from "react";
-import { DAY_LABELS, 분 } from "../constants";
-import { CellSize } from "../constants";
+import { DAY_LABELS, 분, CellSize } from "../../consts";
 import { ScheduleTableHeader } from "./ScheduleTableHeader";
 import { TimeRow } from "./TimeRow";
-import { parseHnM } from "../utils";
+import { parseHnM } from "../../utils/utils";
 
 const TIMES = [
   ...Array(18)

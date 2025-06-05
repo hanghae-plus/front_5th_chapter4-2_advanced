@@ -1,6 +1,6 @@
 import React from "react";
 import { Flex, GridItem, Text } from "@chakra-ui/react";
-import { DAY_LABELS } from "../constants";
+import { DAY_LABELS } from "../../consts";
 
 export const ScheduleTableHeader = React.memo(() => {
   return (
