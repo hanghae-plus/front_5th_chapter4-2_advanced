@@ -34,6 +34,7 @@ import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
 import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
+import LectureRow from "./components/LectureRow.tsx";
 
 interface Props {
     searchInfo: {
@@ -253,23 +254,46 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         [loaderWrapperRef] // setPage와 setSearchOptions는 안정적인 함수라 의존성 배열에 포함할 필요 없음
     );
 
-    const addSchedule = (lecture: Lecture) => {
-        if (!searchInfo) return;
+    // const addSchedule = (lecture: Lecture) => {
+    //     if (!searchInfo) return;
 
-        const { tableId } = searchInfo;
+    //     const { tableId } = searchInfo;
 
-        const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
-            ...schedule,
-            lecture,
-        }));
+    //     const schedules = parseSchedule(lecture.schedule).map((schedule) => ({
+    //         ...schedule,
+    //         lecture,
+    //     }));
 
-        setSchedulesMap((prev) => ({
-            ...prev,
-            [tableId]: [...prev[tableId], ...schedules],
-        }));
+    //     setSchedulesMap((prev) => ({
+    //         ...prev,
+    //         [tableId]: [...prev[tableId], ...schedules],
+    //     }));
 
-        onClose();
-    };
+    //     onClose();
+    // };
+
+    const handleAddSchedule = useCallback(
+        (lecture: Lecture) => {
+            if (!searchInfo) return;
+
+            const { tableId } = searchInfo;
+
+            const schedules = parseSchedule(lecture.schedule).map(
+                (schedule) => ({
+                    ...schedule,
+                    lecture,
+                })
+            );
+
+            setSchedulesMap((prev) => ({
+                ...prev,
+                [tableId]: [...prev[tableId], ...schedules],
+            }));
+
+            onClose();
+        },
+        [searchInfo, setSchedulesMap, onClose]
+    );
 
     useEffect(() => {
         const start = performance.now();
@@ -556,50 +580,18 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                             >
                                 <Table size="sm" variant="striped">
                                     <Tbody>
-                                        {/* 이 부분을 컴포넌트로 뺀다. lectureRow 컴포넌트로 빼면 좋을 것 같음. memo로 다 뺀다.  */}
                                         {visibleLectures.map(
                                             (lecture, index) => (
-                                                <Tr
+                                                <LectureRow
                                                     key={`${lecture.id}-${index}`}
-                                                >
-                                                    <Td width="100px">
-                                                        {lecture.id}
-                                                    </Td>
-                                                    <Td width="50px">
-                                                        {lecture.grade}
-                                                    </Td>
-                                                    <Td width="200px">
-                                                        {lecture.title}
-                                                    </Td>
-                                                    <Td width="50px">
-                                                        {lecture.credits}
-                                                    </Td>
-                                                    <Td
-                                                        width="150px"
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: lecture.major,
-                                                        }}
-                                                    />
-                                                    <Td
-                                                        width="150px"
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: lecture.schedule,
-                                                        }}
-                                                    />
-                                                    <Td width="80px">
-                                                        <Button
-                                                            size="sm"
-                                                            colorScheme="green"
-                                                            onClick={() =>
-                                                                addSchedule(
-                                                                    lecture
-                                                                )
-                                                            }
-                                                        >
-                                                            추가
-                                                        </Button>
-                                                    </Td>
-                                                </Tr>
+                                                    lecture={lecture}
+                                                    tableId={
+                                                        searchInfo?.tableId
+                                                    }
+                                                    onAddSchedule={
+                                                        handleAddSchedule
+                                                    }
+                                                />
                                             )
                                         )}
                                     </Tbody>
