@@ -35,6 +35,7 @@ const ScheduleTables = () => {
         flexWrap="wrap">
         {Object.entries(schedulesMap).map(([tableId, schedules], index) => (
           <ScheduleTable
+            key={tableId}
             tableId={tableId}
             schedules={schedules}
             index={index}
