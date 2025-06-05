@@ -94,6 +94,6 @@ jobs:
                 minute: '2-digit',
                 hour12: false
               })}`,
-              body: body,
+              body: comments,
               labels: ['lighthouse-audit', 'web-vitals']
             });
