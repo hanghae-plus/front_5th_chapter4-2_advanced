@@ -8,8 +8,17 @@ export interface Lecture {
 }
 
 export interface Schedule {
-  lecture: Lecture
+  lecture: Lecture;
   day: string;
-  range: number[]
+  range: number[];
   room?: string;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface ApiResponse<T> {
+  data: T;
+  status: number;
+  statusText: string;
+  headers: any;
+  config: any;
 }
