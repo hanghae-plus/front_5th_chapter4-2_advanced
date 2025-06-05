@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -133,9 +133,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
+  //lecture.schedule을 여러 필터에서 파싱하던 상태 -> 최초 lectures 파싱 시 미리 캐싱해두기
+  const parsedLectures = useMemo(
+    () =>
+      lectures.map((lecture) => ({
+        ...lecture,
+        parsedSchedule: lecture.schedule ? parseSchedule(lecture.schedule) : [],
+      })),
+    [lectures],
+  );
+
   const getFilteredLectures = () => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
-    return lectures
+    return parsedLectures //
       .filter(
         (lecture) =>
           lecture.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -154,33 +164,38 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         if (days.length === 0) {
           return true;
         }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) => days.includes(s.day));
+
+        return lecture.parsedSchedule.some((s) => days.includes(s.day));
       })
       .filter((lecture) => {
         if (times.length === 0) {
           return true;
         }
-        const schedules = lecture.schedule
-          ? parseSchedule(lecture.schedule)
-          : [];
-        return schedules.some((s) =>
+
+        return lecture.parsedSchedule.some((s) =>
           s.range.some((time) => times.includes(time)),
         );
       });
   };
 
-  const filteredLectures = getFilteredLectures();
+  const filteredLectures = useMemo(
+    () => getFilteredLectures(),
+    [lectures, searchOptions],
+  ); //useMemo 적용
+
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map((lecture) => lecture.major))];
+
+  const allMajors = useMemo(
+    () => [...new Set(lectures.map((lecture) => lecture.major))],
+    [lectures],
+  ); //useMemo 적용
 
   const changeSearchOption = (
     field: keyof SearchOption,
     value: SearchOption[typeof field],
   ) => {
+    if (searchOptions[field] === value) return; //같은 값일 때 건너뛰기
     setPage(1);
     setSearchOptions({ ...searchOptions, [field]: value });
     loaderWrapperRef.current?.scrollTo(0, 0);
@@ -225,8 +240,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage((prevPage) => Math.min(lastPage, prevPage + 1));
+        if (entries[0].isIntersecting && page < lastPage) {
+          //조건 추가
+          setPage((prevPage) => prevPage + 1);
         }
       },
       { threshold: 0, root: $loaderWrapper },
@@ -444,14 +460,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                         <Td width="50px">{lecture.grade}</Td>
                         <Td width="200px">{lecture.title}</Td>
                         <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
+                        <Td width="150px" />
+                        {/* dangerouslySetInnerHTML 제거 */}
+                        <Td width="150px" />
                         <Td width="80px">
                           <Button
                             size="sm"
