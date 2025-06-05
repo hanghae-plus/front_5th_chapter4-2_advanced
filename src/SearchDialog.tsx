@@ -164,11 +164,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [...new Set(lectures.map(lecture => lecture.major))]
   , [lectures]);
 
-  const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+  const changeSearchOption = useCallback((field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
     setSearchOptions(({ ...searchOptions, [field]: value }));
     loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  }, [searchOptions]);
 
   const addSchedule = useCallback((lecture: Lecture) => {
     if (!searchInfo) return;
