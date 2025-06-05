@@ -1,4 +1,11 @@
-import { Box, Flex, Grid, GridItem, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Grid,
+  GridItem,
+  Text,
+  GridItemProps,
+} from "@chakra-ui/react";
 import { CellSize, DAY_LABELS, 분 } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
@@ -29,10 +36,153 @@ const TIMES = [
 const GRID_TEMPLATE_COLUMNS = `120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`;
 const GRID_TEMPLATE_ROWS = `40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`;
 
-const ScheduleTable = React.memo(
-  ({ tableId, schedules, onScheduleTimeClick }: Props) => {
+const HeaderCell = React.memo(
+  ({
+    children,
+    ...props
+  }: GridItemProps & {
+    children: React.ReactNode;
+  }) => (
+    <GridItem
+      borderColor="gray.300"
+      bg="gray.100"
+      {...props}
+    >
+      <Flex
+        justifyContent="center"
+        alignItems="center"
+        h="full"
+        w="full"
+      >
+        <Text fontWeight="bold">{children}</Text>
+      </Flex>
+    </GridItem>
+  ),
+);
+
+const DayHeaderCell = React.memo(({ day }: { day: string }) => (
+  <GridItem
+    borderLeft="1px"
+    borderColor="gray.300"
+    bg="gray.100"
+  >
+    <Flex
+      justifyContent="center"
+      alignItems="center"
+      h="full"
+    >
+      <Text fontWeight="bold">{day}</Text>
+    </Flex>
+  </GridItem>
+));
+
+const TimeCell = React.memo(
+  ({ timeIndex, time }: { timeIndex: number; time: string }) => (
+    <GridItem
+      borderTop="1px solid"
+      borderColor="gray.300"
+      bg={timeIndex > 17 ? "gray.200" : "gray.100"}
+    >
+      <Flex
+        justifyContent="center"
+        alignItems="center"
+        h="full"
+      >
+        <Text fontSize="xs">
+          {fill2(timeIndex + 1)} ({time})
+        </Text>
+      </Flex>
+    </GridItem>
+  ),
+);
+
+const EmptyCell = React.memo(
+  ({
+    day,
+    timeIndex,
+    onScheduleTimeClick,
+  }: {
+    day: string;
+    timeIndex: number;
+    onScheduleTimeClick?: (info: { day: string; time: number }) => void;
+  }) => (
+    <GridItem
+      borderWidth="1px 0 0 1px"
+      borderColor="gray.300"
+      bg={timeIndex > 17 ? "gray.100" : "white"}
+      cursor="pointer"
+      _hover={{ bg: "yellow.100" }}
+      onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
+    />
+  ),
+);
+
+const TableOutline = React.memo(
+  ({ tableId, children }: { tableId: string; children: React.ReactNode }) => {
     const dndContext = useDndContext();
 
+    const isCurrentTableActive = useMemo(() => {
+      const activeId = dndContext.active?.id;
+      if (!activeId) return false;
+      return String(activeId).startsWith(`${tableId}:`);
+    }, [dndContext.active?.id, tableId]);
+
+    return (
+      <Box
+        position="relative"
+        outline={isCurrentTableActive ? "5px dashed" : undefined}
+        outlineColor="blue.300"
+      >
+        {children}
+      </Box>
+    );
+  },
+);
+
+const StaticGrid = React.memo(
+  ({
+    onScheduleTimeClick,
+  }: {
+    onScheduleTimeClick?: (info: { day: string; time: number }) => void;
+  }) => (
+    <Grid
+      templateColumns={GRID_TEMPLATE_COLUMNS}
+      templateRows={GRID_TEMPLATE_ROWS}
+      bg="white"
+      fontSize="sm"
+      textAlign="center"
+      outline="1px solid"
+      outlineColor="gray.300"
+    >
+      <HeaderCell>교시</HeaderCell>
+      {DAY_LABELS.map((day) => (
+        <DayHeaderCell
+          key={day}
+          day={day}
+        />
+      ))}
+      {TIMES.map((time, timeIndex) => (
+        <Fragment key={`시간-${timeIndex + 1}`}>
+          <TimeCell
+            timeIndex={timeIndex}
+            time={time}
+          />
+          {DAY_LABELS.map((day) => (
+            <EmptyCell
+              key={`${day}-${timeIndex + 2}`}
+              day={day}
+              timeIndex={timeIndex}
+              onScheduleTimeClick={onScheduleTimeClick}
+            />
+          ))}
+        </Fragment>
+      ))}
+    </Grid>
+  ),
+);
+
+const ScheduleTable = React.memo(
+  ({ tableId, schedules, onScheduleTimeClick }: Props) => {
     const lectureColors = useMemo(() => {
       const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
       const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
@@ -52,96 +202,14 @@ const ScheduleTable = React.memo(
       [lectureColors],
     );
 
-    const isCurrentTableActive = useMemo(() => {
-      const activeId = dndContext.active?.id;
-      if (!activeId) return false;
-      return String(activeId).startsWith(`${tableId}:`);
-    }, [dndContext.active?.id, tableId]);
-
     const scheduleKeys = useMemo(
       () => schedules.map((_, index) => `${tableId}-${index}`),
       [schedules.length, tableId],
     );
 
     return (
-      <Box
-        position="relative"
-        outline={isCurrentTableActive ? "5px dashed" : undefined}
-        outlineColor="blue.300"
-      >
-        <Grid
-          templateColumns={GRID_TEMPLATE_COLUMNS}
-          templateRows={GRID_TEMPLATE_ROWS}
-          bg="white"
-          fontSize="sm"
-          textAlign="center"
-          outline="1px solid"
-          outlineColor="gray.300"
-        >
-          <GridItem
-            key="교시"
-            borderColor="gray.300"
-            bg="gray.100"
-          >
-            <Flex
-              justifyContent="center"
-              alignItems="center"
-              h="full"
-              w="full"
-            >
-              <Text fontWeight="bold">교시</Text>
-            </Flex>
-          </GridItem>
-          {DAY_LABELS.map((day) => (
-            <GridItem
-              key={day}
-              borderLeft="1px"
-              borderColor="gray.300"
-              bg="gray.100"
-            >
-              <Flex
-                justifyContent="center"
-                alignItems="center"
-                h="full"
-              >
-                <Text fontWeight="bold">{day}</Text>
-              </Flex>
-            </GridItem>
-          ))}
-          {TIMES.map((time, timeIndex) => (
-            <Fragment key={`시간-${timeIndex + 1}`}>
-              <GridItem
-                borderTop="1px solid"
-                borderColor="gray.300"
-                bg={timeIndex > 17 ? "gray.200" : "gray.100"}
-              >
-                <Flex
-                  justifyContent="center"
-                  alignItems="center"
-                  h="full"
-                >
-                  <Text fontSize="xs">
-                    {fill2(timeIndex + 1)} ({time})
-                  </Text>
-                </Flex>
-              </GridItem>
-              {DAY_LABELS.map((day) => (
-                <GridItem
-                  key={`${day}-${timeIndex + 2}`}
-                  borderWidth="1px 0 0 1px"
-                  borderColor="gray.300"
-                  bg={timeIndex > 17 ? "gray.100" : "white"}
-                  cursor="pointer"
-                  _hover={{ bg: "yellow.100" }}
-                  onClick={() =>
-                    onScheduleTimeClick?.({ day, time: timeIndex + 1 })
-                  }
-                />
-              ))}
-            </Fragment>
-          ))}
-        </Grid>
-
+      <TableOutline tableId={tableId}>
+        <StaticGrid onScheduleTimeClick={onScheduleTimeClick} />
         {schedules.map((schedule, index) => (
           <DraggableSchedule
             key={scheduleKeys[index]}
@@ -151,7 +219,7 @@ const ScheduleTable = React.memo(
             tableId={tableId}
           />
         ))}
-      </Box>
+      </TableOutline>
     );
   },
 );
