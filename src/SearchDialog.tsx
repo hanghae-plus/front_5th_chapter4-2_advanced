@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -85,6 +85,33 @@ const TIME_SLOTS = [
 ];
 
 const PAGE_SIZE = 100;
+
+const MajorCheckboxItem = memo(
+  ({
+    value,
+    label,
+    isChecked,
+    onChange,
+  }: {
+    value: string;
+    label: string;
+    isChecked: boolean;
+    onChange: (value: string, checked: boolean) => void;
+  }) => {
+    return (
+      <Box>
+        <Checkbox
+          size="sm"
+          value={value}
+          isChecked={isChecked}
+          onChange={(e) => onChange(value, e.target.checked)}
+        >
+          {label}
+        </Checkbox>
+      </Box>
+    );
+  }
+);
 
 const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
 const fetchLiberalArts = () =>
@@ -199,6 +226,15 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [lectures]
   );
 
+  const processedMajors = useMemo(
+    () =>
+      allMajors.map((major) => ({
+        value: major,
+        label: major.replace(/<p>/gi, " "),
+      })),
+    [allMajors]
+  );
+
   const changeSearchOption = useCallback(
     (field: keyof SearchOption, value: SearchOption[typeof field]) => {
       setPage(1);
@@ -206,6 +242,17 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       loaderWrapperRef.current?.scrollTo(0, 0);
     },
     []
+  );
+
+  const handleMajorChange = useCallback(
+    (majorValue: string, isChecked: boolean) => {
+      const newMajors = isChecked
+        ? [...searchOptions.majors, majorValue]
+        : searchOptions.majors.filter((m) => m !== majorValue);
+
+      changeSearchOption("majors", newMajors);
+    },
+    [searchOptions.majors, changeSearchOption]
   );
 
   const addSchedule = useCallback(
@@ -433,12 +480,16 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     borderRadius={5}
                     p={2}
                   >
-                    {allMajors.map((major) => (
-                      <Box key={major}>
-                        <Checkbox key={major} size="sm" value={major}>
-                          {major.replace(/<p>/gi, " ")}
-                        </Checkbox>
-                      </Box>
+                    {processedMajors.map(({ value, label }) => (
+                      <MajorCheckboxItem
+                        key={value}
+                        label={label}
+                        value={value}
+                        isChecked={searchOptions.majors.includes(value)}
+                        onChange={(value, checked) =>
+                          handleMajorChange(value, checked)
+                        }
+                      />
                     ))}
                   </Stack>
                 </CheckboxGroup>
