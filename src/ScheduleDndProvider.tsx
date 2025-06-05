@@ -6,7 +6,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { PropsWithChildren, useCallback, useState } from "react";
+import { PropsWithChildren, useCallback } from "react";
 import { CellSize, DAY_LABELS } from "./constants.ts";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { useDndActiveIdContext } from "./DndActiveIdContext.tsx";
