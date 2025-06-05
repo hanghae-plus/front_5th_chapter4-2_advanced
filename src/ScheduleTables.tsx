@@ -1,10 +1,11 @@
+import { LocalScheduleProvider } from "@/components/providers/local-schedule-provider";
+import { useScheduleContext } from "@/hooks/use-schedule-context";
+import ScheduleTable from "@/ScheduleTable.tsx";
+import SearchDialog from "@/SearchDialog.tsx";
+import { DayTime, Schedule } from "@/types.ts";
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { memo, useMemo, useState } from "react";
-import { LocalScheduleProvider, useScheduleContext } from "./ScheduleContext.tsx";
-import ScheduleTable from "./ScheduleTable.tsx";
-import SearchDialog from "./SearchDialog.tsx";
-import { DayTime, Schedule } from "./types.ts";
 
 export const ScheduleTables = () => {
   const [searchInfo, setSearchInfo] = useState<{

@@ -1,7 +1,7 @@
+import { CellSize, DAY_LABELS } from "@/constants.ts";
+import { useScheduleContext } from "@/hooks/use-schedule-context";
 import { DndContext, DragEndEvent, Modifier, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { PropsWithChildren, useCallback } from "react";
-import { CellSize, DAY_LABELS } from "./constants.ts";
-import { useScheduleContext } from "./ScheduleContext.tsx";
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {

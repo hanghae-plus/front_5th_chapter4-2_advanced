@@ -1,6 +1,6 @@
 import { DAY_LABELS } from "@/constants.ts";
+import { useScheduleContext } from "@/hooks/use-schedule-context";
 import { cacheGet } from "@/lib/axios.ts";
-import { useScheduleContext } from "@/ScheduleContext.tsx";
 import { Lecture } from "@/types.ts";
 import { parseSchedule } from "@/utils.ts";
 import {
@@ -125,7 +125,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const filteredLectures = useMemo(() => {
     const { query = "", credits, grades, days, times, majors } = searchOptions;
     return lectures
-      .filter((lecture) => lecture.title.toLowerCase().includes(query.toLowerCase()) || lecture.id.toLowerCase().includes(query.toLowerCase()))
+      .filter(
+        (lecture) =>
+          lecture.title.toLowerCase().includes(query.toLowerCase()) ||
+          lecture.id.toLowerCase().includes(query.toLowerCase())
+      )
       .filter((lecture) => grades.length === 0 || grades.includes(lecture.grade))
       .filter((lecture) => majors.length === 0 || majors.includes(lecture.major))
       .filter((lecture) => !credits || lecture.credits.startsWith(String(credits)))
@@ -237,7 +241,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
             <HStack spacing={4}>
               <TimeCheckbox searchOptions={searchOptions} changeSearchOption={changeSearchOption} />
-              <MajorsCheckbox searchOptions={searchOptions} changeSearchOption={changeSearchOption} allMajors={allMajors} />
+              <MajorsCheckbox
+                searchOptions={searchOptions}
+                changeSearchOption={changeSearchOption}
+                allMajors={allMajors}
+              />
             </HStack>
             <Text align="right">검색결과: {filteredLectures.length}개</Text>
             <Box>
@@ -271,7 +279,11 @@ const SearchInput = memo(({ searchOptions, changeSearchOption }: DialogChildProp
   return (
     <FormControl>
       <FormLabel>검색어</FormLabel>
-      <Input placeholder="과목명 또는 과목코드" value={searchOptions.query} onChange={(e) => changeSearchOption("query", e.target.value)} />
+      <Input
+        placeholder="과목명 또는 과목코드"
+        value={searchOptions.query}
+        onChange={(e) => changeSearchOption("query", e.target.value)}
+      />
     </FormControl>
   );
 });
@@ -328,7 +340,11 @@ const TimeCheckbox = memo(({ searchOptions, changeSearchOption }: DialogChildPro
   return (
     <FormControl>
       <FormLabel>시간</FormLabel>
-      <CheckboxGroup colorScheme="green" value={searchOptions.times} onChange={(values) => changeSearchOption("times", values.map(Number))}>
+      <CheckboxGroup
+        colorScheme="green"
+        value={searchOptions.times}
+        onChange={(values) => changeSearchOption("times", values.map(Number))}
+      >
         <Wrap spacing={1} mb={2}>
           {searchOptions.times
             .sort((a, b) => a - b)
@@ -360,31 +376,37 @@ const TimeCheckbox = memo(({ searchOptions, changeSearchOption }: DialogChildPro
   );
 });
 
-const MajorsCheckbox = memo(({ searchOptions, changeSearchOption, allMajors }: DialogChildProps & { allMajors: string[] }) => {
-  return (
-    <FormControl>
-      <FormLabel>전공</FormLabel>
-      <CheckboxGroup colorScheme="green" value={searchOptions.majors} onChange={(values) => changeSearchOption("majors", values as string[])}>
-        <Wrap spacing={1} mb={2}>
-          {searchOptions.majors.map((major) => (
-            <Tag key={major} size="sm" variant="outline" colorScheme="blue">
-              <TagLabel>{major.split("<p>").pop()}</TagLabel>
-              <TagCloseButton
-                onClick={() =>
-                  changeSearchOption(
-                    "majors",
-                    searchOptions.majors.filter((v) => v !== major)
-                  )
-                }
-              />
-            </Tag>
-          ))}
-        </Wrap>
-        <AllMajorsCheckbox allMajors={allMajors} />
-      </CheckboxGroup>
-    </FormControl>
-  );
-});
+const MajorsCheckbox = memo(
+  ({ searchOptions, changeSearchOption, allMajors }: DialogChildProps & { allMajors: string[] }) => {
+    return (
+      <FormControl>
+        <FormLabel>전공</FormLabel>
+        <CheckboxGroup
+          colorScheme="green"
+          value={searchOptions.majors}
+          onChange={(values) => changeSearchOption("majors", values as string[])}
+        >
+          <Wrap spacing={1} mb={2}>
+            {searchOptions.majors.map((major) => (
+              <Tag key={major} size="sm" variant="outline" colorScheme="blue">
+                <TagLabel>{major.split("<p>").pop()}</TagLabel>
+                <TagCloseButton
+                  onClick={() =>
+                    changeSearchOption(
+                      "majors",
+                      searchOptions.majors.filter((v) => v !== major)
+                    )
+                  }
+                />
+              </Tag>
+            ))}
+          </Wrap>
+          <AllMajorsCheckbox allMajors={allMajors} />
+        </CheckboxGroup>
+      </FormControl>
+    );
+  }
+);
 
 const AllMajorsCheckbox = memo(({ allMajors }: { allMajors: string[] }) => {
   return (
@@ -400,17 +422,19 @@ const AllMajorsCheckbox = memo(({ allMajors }: { allMajors: string[] }) => {
   );
 });
 
-const VisibleLectureTable = memo(({ visibleLectures, addSchedule }: { visibleLectures: Lecture[]; addSchedule: (lecture: Lecture) => void }) => {
-  return (
-    <Table size="sm" variant="striped">
-      <Tbody>
-        {visibleLectures.map((lecture, index) => (
-          <LectureTr key={`${lecture.id}-${index}`} lecture={lecture} addSchedule={addSchedule} />
-        ))}
-      </Tbody>
-    </Table>
-  );
-});
+const VisibleLectureTable = memo(
+  ({ visibleLectures, addSchedule }: { visibleLectures: Lecture[]; addSchedule: (lecture: Lecture) => void }) => {
+    return (
+      <Table size="sm" variant="striped">
+        <Tbody>
+          {visibleLectures.map((lecture, index) => (
+            <LectureTr key={`${lecture.id}-${index}`} lecture={lecture} addSchedule={addSchedule} />
+          ))}
+        </Tbody>
+      </Table>
+    );
+  }
+);
 
 const LectureTr = memo(({ lecture, addSchedule }: { lecture: Lecture; addSchedule: (lecture: Lecture) => void }) => {
   const handleAddClick = useCallback(() => addSchedule(lecture), [addSchedule, lecture]);

@@ -1,3 +1,7 @@
+import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "@/constants.ts";
+import { useLocalScheduleContext } from "@/hooks/use-local-schedule-context";
+import { DayTime, Schedule } from "@/types.ts";
+import { fill2 } from "@/utils.ts";
 import {
   Box,
   Button,
@@ -15,10 +19,6 @@ import {
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ComponentProps, Fragment, memo, useCallback, useMemo, useState } from "react";
-import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "./constants.ts";
-import { useLocalScheduleContext } from "./ScheduleContext.tsx";
-import { DayTime, Schedule } from "./types.ts";
-import { fill2 } from "./utils.ts";
 
 // ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
 const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {

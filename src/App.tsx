@@ -1,4 +1,4 @@
-import { ScheduleProvider } from "@/ScheduleContext.tsx";
+import { ScheduleProvider } from "@/components/providers/schedule-provider";
 import ScheduleDndProvider from "@/ScheduleDndProvider.tsx";
 import { ScheduleTables } from "@/ScheduleTables.tsx";
 import { ChakraProvider } from "@chakra-ui/react";
