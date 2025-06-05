@@ -96,22 +96,21 @@ const fetchLiberalArts = () =>
 //   (console.log('API Call 6', performance.now()), await fetchLiberalArts()),
 // ]);
 
-const majorQueries = ["1", "3", "5"];
-const liberalArtsQueries = ["2", "4", "6"];
+const queries: { query: string; type: "major" | "liberal" }[] = [
+  { query: "1", type: "major" },
+  { query: "2", type: "liberal" },
+  { query: "3", type: "major" },
+  { query: "4", type: "liberal" },
+  { query: "5", type: "major" },
+  { query: "6", type: "liberal" },
+];
 
 const fetchAllLectures = async (): Promise<AxiosResponse<Lecture[]>[]> => {
-  const majorPromises = majorQueries.map((query) => {
-    console.log(`API Call ${query}`, performance.now());
-    return fetchMajors();
+  const promises = queries.map(async (query) => {
+    console.log(`API Call ${query.query}`, performance.now());
+    return query.type === "major" ? fetchMajors() : fetchLiberalArts();
   });
-
-  const liberalPromises = liberalArtsQueries.map((query) => {
-    console.log(`API Call ${query}`, performance.now());
-    return fetchLiberalArts();
-  });
-
-  const results = await Promise.all([...majorPromises, ...liberalPromises]);
-  return results;
+  return await Promise.all([...promises]);
 };
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
