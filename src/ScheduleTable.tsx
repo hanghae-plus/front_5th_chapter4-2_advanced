@@ -98,6 +98,25 @@ const ScheduleTable = memo(
   }
 );
 
+interface TableHeaderProps {
+  time: string;
+  timeIndex: number;
+}
+
+const TableHeader = memo(({ time, timeIndex }: TableHeaderProps) => (
+  <GridItem
+    borderTop="1px solid"
+    borderColor="gray.300"
+    bg={timeIndex > 17 ? "gray.200" : "gray.100"}
+  >
+    <Flex justifyContent="center" alignItems="center" h="full">
+      <Text fontSize="xs">
+        {fill2(timeIndex + 1)} ({time})
+      </Text>
+    </Flex>
+  </GridItem>
+));
+
 const ScheduleTableGrid = memo(
   ({
     onScheduleTimeClick,
@@ -140,17 +159,7 @@ const ScheduleTableGrid = memo(
         ))}
         {TIMES.map((time, timeIndex) => (
           <Fragment key={`시간-${timeIndex + 1}`}>
-            <GridItem
-              borderTop="1px solid"
-              borderColor="gray.300"
-              bg={timeIndex > 17 ? "gray.200" : "gray.100"}
-            >
-              <Flex justifyContent="center" alignItems="center" h="full">
-                <Text fontSize="xs">
-                  {fill2(timeIndex + 1)} ({time})
-                </Text>
-              </Flex>
-            </GridItem>
+            <TableHeader time={time} timeIndex={timeIndex} />
             {DAY_LABELS.map((day) => (
               <GridItem
                 key={`${day}-${timeIndex + 2}`}
