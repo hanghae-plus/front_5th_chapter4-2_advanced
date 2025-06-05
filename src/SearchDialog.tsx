@@ -86,15 +86,42 @@ const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
 const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
+const createCachedFetcher = () => {
+  const cache = new Map();
+
+  const cachedFetch = async (
+    logId: number,
+    key: string,
+    fetchFn: () => void
+  ) => {
+    console.log(`API Call ${logId}`, performance.now());
+
+    if (cache.has(key)) {
+      return cache.get(key)!;
+    }
+
+    const result = fetchFn();
+    cache.set(key, result);
+    return result;
+  };
+
+  return cachedFetch;
+};
+
+const cachedFetch = createCachedFetcher();
+
 const fetchAllLectures = async () => {
-  console.log("Starting API Calls", performance.now())
-	const [majors, liberalArts] = await Promise.all([
-		fetchMajors(),
-		fetchLiberalArts(),
-	])
-	console.log("API Calls Completed", performance.now())
-	return [majors, liberalArts]
-}
+  const results = await Promise.all([
+    cachedFetch(1, "majors", fetchMajors),
+    cachedFetch(2, "liberalArts", fetchLiberalArts),
+    cachedFetch(3, "majors", fetchMajors),
+    cachedFetch(4, "liberalArts", fetchLiberalArts),
+    cachedFetch(5, "majors", fetchMajors),
+    cachedFetch(6, "liberalArts", fetchLiberalArts),
+  ]);
+
+  return results;
+};
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -178,22 +205,15 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   };
 
   useEffect(() => {
-    const start = performance.now();
-    console.log('API 호출 시작: ', start)
-    fetchAllLectures().then(results => {
-      const end = performance.now();
-      console.log('모든 API 호출 완료 ', end)
-      console.log('API 호출에 걸린 시간(ms): ', end - start)
-      setLectures(
-        results.flatMap(result =>
-          result.data.map(lecture => ({
-            ...lecture,
-            parsedSchedule: parseSchedule(lecture.schedule)
-          }))
-        )
-      );
-    });
-  }, []);
+		const start = performance.now()
+		console.log("API 호출 시작: ", start)
+		fetchAllLectures().then((results) => {
+			const end = performance.now()
+			console.log("모든 API 호출 완료 ", end)
+			console.log("API 호출에 걸린 시간(ms): ", end - start)
+			setLectures(results.flatMap((result) => result.data))
+		})
+	}, [])
 
   //무한 스크롤 개선
   useEffect(() => {
