@@ -83,7 +83,24 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-// 🔥 API 호출 최적화: 클로저를 이용한 캐싱
+// 디바운스 Hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+// API 호출 최적화: 클로저를 이용한 캐싱
 const createCachedFetcher = () => {
   const cache = new Map<string, Promise<{ data: Lecture[] }>>();
 
@@ -129,6 +146,10 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
   const loaderRef = useRef<HTMLDivElement>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [page, setPage] = useState(1);
+
+  const [inputValue, setInputValue] = useState("");
+  const debouncedQuery = useDebounce(inputValue, 300);
+
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
     query: "",
     grades: [],
@@ -248,9 +269,10 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
 
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      changeSearchOption("query", e.target.value);
+      const value = e.target.value;
+      setInputValue(value);
     },
-    [changeSearchOption]
+    []
   );
 
   const handleCreditsChange = useCallback(
@@ -343,6 +365,13 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
     return () => observer.unobserve($loader);
   }, [lastPage]);
 
+  //디바운스된 검색어가 변경될 때만 실제 검색 옵션 업데이트
+  useEffect(() => {
+    setSearchOptions((prev) => ({ ...prev, query: debouncedQuery }));
+    setPage(1); // 검색어 변경 시 페이지 초기화
+    loaderWrapperRef.current?.scrollTo(0, 0);
+  }, [debouncedQuery]);
+
   useEffect(() => {
     setSearchOptions((prev) => ({
       ...prev,
@@ -365,7 +394,7 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
                 <FormLabel>검색어</FormLabel>
                 <Input
                   placeholder="과목명 또는 과목코드"
-                  value={searchOptions.query}
+                  value={inputValue}
                   onChange={handleQueryChange}
                 />
               </FormControl>
