@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
 	Box,
 	Button,
@@ -103,6 +103,70 @@ const fetchAllLectures = async () => {
 	console.log("API Calls Completed", performance.now())
 	return [majors, liberalArts]
 }
+
+// 강의 행 컴포넌트 - 개별 행의 불필요한 리렌더링 방지
+const LectureRow = memo(
+	({
+		lecture,
+		index,
+		onAddSchedule,
+	}: {
+		lecture: Lecture
+		index: number
+		onAddSchedule: (lecture: Lecture) => void
+	}) => {
+		const handleAddClick = useCallback(() => {
+			onAddSchedule(lecture)
+		}, [lecture, onAddSchedule])
+
+		return (
+			<Tr key={`${lecture.id}-${index}`}>
+				<Td width="100px">{lecture.id}</Td>
+				<Td width="50px">{lecture.grade}</Td>
+				<Td width="200px">{lecture.title}</Td>
+				<Td width="50px">{lecture.credits}</Td>
+				<Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }} />
+				<Td
+					width="150px"
+					dangerouslySetInnerHTML={{ __html: lecture.schedule }}
+				/>
+				<Td width="80px">
+					<Button size="sm" colorScheme="green" onClick={handleAddClick}>
+						추가
+					</Button>
+				</Td>
+			</Tr>
+		)
+	}
+)
+
+// 전공 체크박스 컴포넌트 - 개별 체크박스의 불필요한 리렌더링 방지
+const MajorCheckbox = memo(
+	({
+		major,
+		isChecked,
+		onToggle,
+	}: {
+		major: string
+		isChecked: boolean
+		onToggle: (major: string, checked: boolean) => void
+	}) => {
+		const handleChange = useCallback(
+			(e: React.ChangeEvent<HTMLInputElement>) => {
+				onToggle(major, e.target.checked)
+			},
+			[major, onToggle]
+		)
+
+		return (
+			<Box key={major}>
+				<Checkbox size="sm" isChecked={isChecked} onChange={handleChange}>
+					{major.replace(/<p>/gi, " ")}
+				</Checkbox>
+			</Box>
+		)
+	}
+)
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 /**
@@ -423,11 +487,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 										p={2}
 									>
 										{allMajors.map((major) => (
-											<Box key={major}>
-												<Checkbox key={major} size="sm" value={major}>
-													{major.replace(/<p>/gi, " ")}
-												</Checkbox>
-											</Box>
+											<MajorCheckbox
+												key={major}
+												major={major}
+												isChecked={searchOptions.majors.includes(major)}
+												onToggle={(m, checked) =>
+													changeSearchOption(
+														"majors",
+														checked
+															? [...searchOptions.majors, m]
+															: searchOptions.majors.filter((v) => v !== m)
+													)
+												}
+											/>
 										))}
 									</Stack>
 								</CheckboxGroup>
@@ -453,29 +525,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 								<Table size="sm" variant="striped">
 									<Tbody>
 										{visibleLectures.map((lecture, index) => (
-											<Tr key={`${lecture.id}-${index}`}>
-												<Td width="100px">{lecture.id}</Td>
-												<Td width="50px">{lecture.grade}</Td>
-												<Td width="200px">{lecture.title}</Td>
-												<Td width="50px">{lecture.credits}</Td>
-												<Td
-													width="150px"
-													dangerouslySetInnerHTML={{ __html: lecture.major }}
-												/>
-												<Td
-													width="150px"
-													dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-												/>
-												<Td width="80px">
-													<Button
-														size="sm"
-														colorScheme="green"
-														onClick={() => addSchedule(lecture)}
-													>
-														추가
-													</Button>
-												</Td>
-											</Tr>
+											<LectureRow
+												key={`${lecture.id}-${index}`}
+												lecture={lecture}
+												index={index}
+												onAddSchedule={addSchedule}
+											/>
 										))}
 									</Tbody>
 								</Table>
