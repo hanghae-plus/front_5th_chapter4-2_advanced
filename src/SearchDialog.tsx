@@ -32,8 +32,8 @@ import {
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import { Lecture } from "./types.ts";
 import { parseSchedule } from "./utils.ts";
-import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from "./constants.ts";
+import {  useLecturesQueries } from "./useLecturesQueries.ts";
 
 interface Props {
   searchInfo: {
@@ -82,10 +82,6 @@ const TIME_SLOTS = [
 
 const PAGE_SIZE = 100;
 
-const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
-const fetchLiberalArts = () =>
-  axios.get<Lecture[]>("/schedules-liberal-arts.json");
-
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
 // const fetchAllLectures = async () => await Promise.all([
 //   (console.log('API Call 1', performance.now()), await fetchMajors()),
@@ -96,26 +92,10 @@ const fetchLiberalArts = () =>
 //   (console.log('API Call 6', performance.now()), await fetchLiberalArts()),
 // ]);
 
-const queries: { query: string; type: "major" | "liberal" }[] = [
-  { query: "1", type: "major" },
-  { query: "2", type: "liberal" },
-  { query: "3", type: "major" },
-  { query: "4", type: "liberal" },
-  { query: "5", type: "major" },
-  { query: "6", type: "liberal" },
-];
-
-const fetchAllLectures = async (): Promise<AxiosResponse<Lecture[]>[]> => {
-  const promises = queries.map(async (query) => {
-    console.log(`API Call ${query.query}`, performance.now());
-    return query.type === "major" ? fetchMajors() : fetchLiberalArts();
-  });
-  return await Promise.all([...promises]);
-};
-
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const { setSchedulesMap } = useScheduleContext();
+  const { fetchAllLectures } = useLecturesQueries();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -201,9 +181,19 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   };
 
   useEffect(() => {
+    const queries: { query: string; type: "major" | "liberal" }[] = [
+      { query: "1", type: "major" },
+      { query: "2", type: "liberal" },
+      { query: "3", type: "major" },
+      { query: "4", type: "liberal" },
+      { query: "5", type: "major" },
+      { query: "6", type: "liberal" },
+    ];
+
     const start = performance.now();
     console.log("API 호출 시작: ", start);
-    fetchAllLectures().then((results) => {
+
+    fetchAllLectures(queries).then((results) => {
       const end = performance.now();
       console.log("모든 API 호출 완료 ", end);
       console.log("API 호출에 걸린 시간(ms): ", end - start);
