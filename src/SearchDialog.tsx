@@ -158,10 +158,34 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
+  const searchCacheRef = useRef<Map<string, Lecture[]>>(new Map());
+
   // 불필요한 연산 방지: 필터링 로직 메모이제이션
   const getFilteredLectures = useCallback(() => {
+    const start = performance.now();
+
+    // 검색 조건을 키로 사용 (page 제외!)
+    const cacheKey = JSON.stringify({
+      query: searchOptions.query || "",
+      credits: searchOptions.credits,
+      grades: [...searchOptions.grades].sort(),
+      days: [...searchOptions.days].sort(),
+      times: [...searchOptions.times].sort(),
+      majors: [...searchOptions.majors].sort(),
+    });
+
+    // 캐시된 결과가 있으면 즉시 반환
+    if (searchCacheRef.current.has(cacheKey)) {
+      const cached = searchCacheRef.current.get(cacheKey)!;
+      console.log(`📦 캐시 사용: ${cached.length}개 결과 (0ms)`);
+      return cached;
+    }
+
+    console.log(`새로운 검색 시작: ${cacheKey}`);
+
     const { query = "", credits, grades, days, times, majors } = searchOptions;
-    return lectures
+
+    const filtered = lectures
       .filter(
         (lecture) =>
           lecture.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -196,6 +220,16 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
           s.range.some((time) => times.includes(time))
         );
       });
+
+    // 결과를 캐시에 저장
+    searchCacheRef.current.set(cacheKey, filtered);
+
+    const end = performance.now();
+    console.log(
+      `새 검색 완료: ${filtered.length}개 결과 (${(end - start).toFixed(2)}ms)`
+    );
+
+    return filtered;
   }, [lectures, searchOptions]);
 
   // 메모이제이션으로 렌더링 시마다 재계산 방지
@@ -209,11 +243,17 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
     [filteredLectures.length]
   );
 
-  const visibleLectures = useMemo(
-    () => filteredLectures.slice(0, page * PAGE_SIZE),
-    [filteredLectures, page]
-  );
-
+  const visibleLectures = useMemo(() => {
+    const start = performance.now();
+    const result = filteredLectures.slice(0, page * PAGE_SIZE);
+    const end = performance.now();
+    console.log(
+      `📄 페이지 ${page}: ${result.length}개 표시 (${(end - start).toFixed(
+        2
+      )}ms)`
+    );
+    return result;
+  }, [filteredLectures, page]);
   const allMajors = useMemo(
     () => [...new Set(lectures.map((lecture) => lecture.major))],
     [lectures]
