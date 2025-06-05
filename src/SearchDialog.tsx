@@ -583,7 +583,6 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
                   <Tbody>
                     {visibleLectures.map((lecture, index) => (
                       <LectureRow
-                        index={index}
                         key={`${lecture.id}-${index}`}
                         lecture={lecture}
                         onAddSchedule={addSchedule}
