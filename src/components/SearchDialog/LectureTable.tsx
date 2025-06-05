@@ -75,6 +75,7 @@ const LectureTable = ({
           <Tbody>
             {visibleLectures.map((lecture, index) => (
               <LectureTableRow
+                key={`${lecture.id}-${index}-row`}
                 lecture={lecture}
                 index={index}
                 addSchedule={addSchedule}
