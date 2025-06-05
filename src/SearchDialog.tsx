@@ -150,9 +150,9 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       });
   }, [lectures, searchOptions]);
 
-  const lastPage = useMemo(()=>{
-    Math.ceil(filteredLectures.length / PAGE_SIZE);
-  },[filteredLectures.length]) 
+  const lastPage = useMemo(() => {
+    return Math.ceil(filteredLectures.length / PAGE_SIZE);
+  }, [filteredLectures.length]);
 
   // 페이지 변경 시 렌더링 최적화
   const visibleLectures = useMemo(() => {
