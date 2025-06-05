@@ -104,6 +104,13 @@ const ScheduleTableGrid = memo(
   }: {
     onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   }) => {
+    const handleCellClick = useCallback(
+      (day: string, timeIndex: number) => {
+        onScheduleTimeClick?.({ day, time: timeIndex + 1 });
+      },
+      [onScheduleTimeClick]
+    );
+
     return (
       <Grid
         templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
@@ -152,9 +159,7 @@ const ScheduleTableGrid = memo(
                 bg={timeIndex > 17 ? "gray.100" : "white"}
                 cursor="pointer"
                 _hover={{ bg: "yellow.100" }}
-                onClick={() =>
-                  onScheduleTimeClick?.({ day, time: timeIndex + 1 })
-                }
+                onClick={() => handleCellClick(day, timeIndex)}
               />
             ))}
           </Fragment>
