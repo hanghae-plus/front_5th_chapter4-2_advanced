@@ -36,7 +36,7 @@ interface TableContextType {
 
 const TableContext = createContext<TableContextType | null>(null);
 
-export const useTableContext = (tableId: string) => {
+export const useTableContext = () => {
   const context = useContext(TableContext);
   if (!context) {
     throw new Error("useTableContext must be used within a TableProvider");
@@ -45,11 +45,10 @@ export const useTableContext = (tableId: string) => {
 };
 
 interface TableProviderProps extends PropsWithChildren {
-  tableId: string;
   initialSchedules?: Schedule[];
 }
 
-export const TableProvider = ({ children, tableId, initialSchedules = [] }: TableProviderProps) => {
+export const TableProvider = ({ children, initialSchedules = [] }: TableProviderProps) => {
   const [schedules, setSchedules] = useState<Schedule[]>(initialSchedules);
 
   const addSchedule = useCallback((schedule: Schedule) => {
