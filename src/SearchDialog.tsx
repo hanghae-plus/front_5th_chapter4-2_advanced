@@ -123,6 +123,18 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
+  const parsedSchedules = useMemo(() => {
+    const scheduleMap = new Map<string, ReturnType<typeof parseSchedule>>();
+    
+    lectures.forEach(lecture => {
+      if (lecture.schedule) {
+        scheduleMap.set(lecture.id, parseSchedule(lecture.schedule));
+      }
+    });
+    
+    return scheduleMap;
+  }, [lectures]);
+
   const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     
@@ -142,7 +154,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const matchesCredits = !credits || lecture.credits.startsWith(String(credits));
       
       // 시간표 필터링
-      const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
+      const schedules = parsedSchedules.get(lecture.id) || [];
       const matchesDay = days.length === 0 || schedules.some(s => days.includes(s.day));
       const matchesTime = times.length === 0 || schedules.some(s => s.range.some(time => times.includes(time)));
       
@@ -152,7 +164,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       
       return filtered;
     }, []);
-  }, [lectures, searchOptions]);
+  }, [lectures, searchOptions, parsedSchedules]);
 
   const allMajors = useMemo(() => 
     [...new Set(lectures.map(lecture => lecture.major))],
