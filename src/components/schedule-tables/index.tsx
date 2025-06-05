@@ -1,6 +1,8 @@
+import { LocalScheduleProvider } from "@/components/providers/local-schedule-provider";
+import ScheduleTable from "@/components/schedule-table";
 import SearchDialog from "@/components/search-dialog";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
-import { DayTime } from "@/types";
+import { DayTime, TableHandlers } from "@/types";
 import { Flex } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { useMemo, useState } from "react";
@@ -32,7 +34,7 @@ const ScheduleTables = () => {
   const activeTableId = getActiveTableId();
 
   // 각각의 table 별 handler를 미리 선언해 다른 테이블에 영향이 없도록 수정
-  const handlers = useMemo(() => {
+  const handlers: TableHandlers[] = useMemo(() => {
     console.log("갱신");
     return scheduleTableList.map(
       ([tableId]) =>
@@ -62,20 +64,29 @@ const ScheduleTables = () => {
   return (
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
-        {scheduleTableList.map(([tableId, schedules], index) => (
-          <TableWrapper
-            key={tableId}
-            tableId={tableId}
-            index={index}
-            schedules={schedules}
-            isDeletable={disabledRemoveButton}
-            isActive={tableId === activeTableId}
-            {...handlers[index]}
-          />
-        ))}
+        {scheduleTableList.map(([tableId, schedules], index) => {
+          const handler = handlers[index];
+          return (
+            <LocalScheduleProvider // table 별 Local Context API 로 재할당
+              key={tableId}
+              tableId={tableId}
+              schedules={schedules}
+              handleAddClick={handler.handleAddClick}
+              handleDuplicateClick={handler.handleDuplicateClick}
+              handleDeleteClick={handler.handleDeleteClick}
+              handleScheduleTimeClick={handler.handleScheduleTimeClick}
+              handleDeleteButtonClick={handler.handleDeleteButtonClick}
+            >
+              <TableWrapper key={tableId} index={index} isDeletable={disabledRemoveButton}>
+                <ScheduleTable key={`schedule-table-${index}`} isActive={tableId === activeTableId} />
+              </TableWrapper>
+            </LocalScheduleProvider>
+          );
+        })}
       </Flex>
       <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
     </>
   );
 };
+
 export default ScheduleTables;
