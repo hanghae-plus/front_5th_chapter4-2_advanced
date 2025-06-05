@@ -1,11 +1,12 @@
 import { Box, Checkbox } from '@chakra-ui/react';
+import { memo } from 'react';
 
 interface TimeSlotItemProps {
     id: number;
     label: string;
 }
 
-const TimeSlotItem = ({ id, label }: TimeSlotItemProps) => {
+const TimeSlotItem = memo(({ id, label }: TimeSlotItemProps) => {
   return (
     <Box key={id}>
         <Checkbox 
@@ -18,6 +19,6 @@ const TimeSlotItem = ({ id, label }: TimeSlotItemProps) => {
         </Checkbox>
     </Box>
   )
-};
+});
 
 export default TimeSlotItem;
