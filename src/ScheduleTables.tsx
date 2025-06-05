@@ -2,9 +2,56 @@ import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleTable from "./ScheduleTable.tsx";
 import { useScheduleContext } from "./ScheduleContext.tsx";
 import SearchDialog from "./SearchDialog.tsx";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import { useDndContext } from "@dnd-kit/core";
 import { ScheduleTableContextProvider } from "./ScheduleTableContext.tsx";
+
+interface TableActionsProps {
+  tableId: string;
+  index: number;
+  onAdd: (tableId: string) => void;
+  onDuplicate: (tableId: string) => void;
+  onRemove: (tableId: string) => void;
+  disabledRemove: boolean;
+}
+
+const TableActions = memo(
+  ({
+    tableId,
+    index,
+    onAdd,
+    onDuplicate,
+    onRemove,
+    disabledRemove,
+  }: TableActionsProps) => {
+    return (
+      <Flex justifyContent="space-between" alignItems="center">
+        <Heading as="h3" fontSize="lg">
+          시간표 {index + 1}
+        </Heading>
+        <ButtonGroup size="sm" isAttached>
+          <Button colorScheme="green" onClick={() => onAdd(tableId)}>
+            시간표 추가
+          </Button>
+          <Button
+            colorScheme="green"
+            mx="1px"
+            onClick={() => onDuplicate(tableId)}
+          >
+            복제
+          </Button>
+          <Button
+            colorScheme="green"
+            isDisabled={disabledRemove}
+            onClick={() => onRemove(tableId)}
+          >
+            삭제
+          </Button>
+        </ButtonGroup>
+      </Flex>
+    );
+  }
+);
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
@@ -35,6 +82,10 @@ export const ScheduleTables = () => {
     },
     [setSchedulesMap]
   );
+
+  const handleAdd = useCallback((tableId: string) => {
+    setSearchInfo({ tableId });
+  }, []);
 
   const dndContext = useDndContext();
   const activeTableId = useMemo(() => {
@@ -82,33 +133,14 @@ export const ScheduleTables = () => {
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
         {schedulesEntries.map(([tableId, schedules], index) => (
           <Stack key={tableId} width="600px">
-            <Flex justifyContent="space-between" alignItems="center">
-              <Heading as="h3" fontSize="lg">
-                시간표 {index + 1}
-              </Heading>
-              <ButtonGroup size="sm" isAttached>
-                <Button
-                  colorScheme="green"
-                  onClick={() => setSearchInfo({ tableId })}
-                >
-                  시간표 추가
-                </Button>
-                <Button
-                  colorScheme="green"
-                  mx="1px"
-                  onClick={() => duplicate(tableId)}
-                >
-                  복제
-                </Button>
-                <Button
-                  colorScheme="green"
-                  isDisabled={disabledRemoveButton}
-                  onClick={() => remove(tableId)}
-                >
-                  삭제
-                </Button>
-              </ButtonGroup>
-            </Flex>
+            <TableActions
+              tableId={tableId}
+              index={index}
+              onAdd={handleAdd}
+              onDuplicate={duplicate}
+              onRemove={remove}
+              disabledRemove={disabledRemoveButton}
+            />
             <ScheduleTableContextProvider schedules={schedules}>
               <ScheduleTable
                 key={`schedule-table-${index}`}
