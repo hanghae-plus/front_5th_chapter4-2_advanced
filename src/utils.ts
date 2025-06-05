@@ -11,12 +11,11 @@ const getTimeRange = (value: string): number[] => {
   return Array(end - start + 1)
     .fill(start)
     .map((v, k) => v + k);
-}
+};
 
 export const parseSchedule = (schedule: string) => {
-  const schedules = schedule.split('<p>');
-  return schedules.map(schedule => {
-
+  const schedules = schedule.split("<p>");
+  return schedules.map((schedule) => {
     const reg = /^([가-힣])(\d+(~\d+)?)(.*)/;
 
     const [day] = schedule.split(/(\d+)/);
