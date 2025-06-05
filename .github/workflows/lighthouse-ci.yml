@@ -29,18 +29,23 @@ jobs:
           
       - name: Install dependencies
         run: |
-          npm install -g @lhci/cli@0.14.x
-          npm install -g http-server
+          npm install -g @lhci/cli@0.14.x http-server
           
       - name: Start local server
-        run: http-server . -p 8080 &
+        run: |
+          http-server . -p 8080 &
+          sleep 10
         
       - name: Run Lighthouse CI
         id: lighthouse
         continue-on-error: true
         run: |
           URL="${{ github.event.inputs.url || 'http://localhost:8080' }}"
-          lhci autorun --collect.url=$URL
+          lhci autorun \
+            --collect.url=$URL \
+            --upload.target=filesystem \
+            --outputDir=./lhci_reports
+
           
       - name: Create GitHub Issue with Results
         if: always()
@@ -49,34 +54,36 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const path = require('path');
 
-            const results = JSON.parse(fs.readFileSync("${{ env.working-directory }}/lhci_reports/manifest.json"));
-            let comments = "";
+            const reportPath = path.join(process.env.GITHUB_WORKSPACE, 'lhci_reports', 'manifest.json');
+            if (!fs.existsSync(reportPath)) {
+              core.setFailed(`manifest.json not found: ${reportPath}`);
+              return;
+            }
+            const results = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            let body = "";
 
-            results.forEach((result,index) => {
-              const { summary } = result;
+             results.forEach((r, i) => {
+              const s     = r.summary;
+              const pct   = v => Math.round(v * 100);
+              const badge = v => (v >= 90 ? '🟢' : v >= 70 ? '🟠' : '🔴');
+              Object.keys(s).forEach(k => s[k] = pct(s[k]));
 
-              const format = (res) => Math.round(res * 100);
-              Object.keys(summary).forEach((key) => (summary[key] = format(summary[key])));
-
-              const badge = (res) => (res >= 90 ? "🟢" : res >= 70 ? "🟠" : "🔴");
-
-              const comment = [
-                `⚡️ Lighthouse report ${index}`,
+              body += [
+                `## ⚡️ Lighthouse report ${i}`,
                 `| Category | Score |`,
                 `| --- | --- |`,
-                `| ${badge(summary.performance)} Performance | ${summary.performance} |`,
-                `| ${badge(summary.accessibility)} Accessibility | ${summary.accessibility} |`,
-                `| ${badge(summary['best-practices'])} Best practices | ${summary['best-practices']} |`,
-                `| ${badge(summary.seo)} SEO | ${summary.seo} |`,
-                `| ${badge(summary.pwa)} PWA | ${summary.pwa} |`,
+                `| ${badge(s.performance)} Performance | ${s.performance} |`,
+                `| ${badge(s.accessibility)} Accessibility | ${s.accessibility} |`,
+                `| ${badge(s['best-practices'])} Best practices | ${s['best-practices']} |`,
+                `| ${badge(s.seo)} SEO | ${s.seo} |`,
+                `| ${badge(s.pwa)} PWA | ${s.pwa} |`,
                 `\n`,
               ].join("\n");
-              comments += `\n> 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
-              comments += comment + "\n";
             });
 
-            core.setOutput('comments', comments)
+            body += `\n> 📅 측정 시간: ${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
             
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -90,6 +97,6 @@ jobs:
                 minute: '2-digit',
                 hour12: false
               })}`,
-              body: comments,
+              body,
               labels: ['lighthouse-audit', 'web-vitals']
             });
