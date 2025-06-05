@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -87,12 +87,12 @@ const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.jso
 
 const fetchAllLectures = async () => {
   const promises = [
-    fetchMajors().then(() => console.log('API Call 1', performance.now())),
-    fetchLiberalArts().then(() => console.log('API Call 2', performance.now())),
-    fetchMajors().then(() => console.log('API Call 3', performance.now())),
-    fetchLiberalArts().then(() => console.log('API Call 4', performance.now())),
-    fetchMajors().then(() => console.log('API Call 5', performance.now())),
-    fetchLiberalArts().then(() => console.log('API Call 6', performance.now())),
+    fetchMajors(),
+    fetchLiberalArts(),
+    fetchMajors(),
+    fetchLiberalArts(),
+    fetchMajors(),
+    fetchLiberalArts(),
   ];
 
   return Promise.all(promises);
@@ -114,7 +114,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const getFilteredLectures = useCallback(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(
@@ -139,36 +139,39 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
-  };
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
+  const filteredLectures = useMemo(() => getFilteredLectures(), [getFilteredLectures]);
+  const lastPage = useMemo(() => Math.ceil(filteredLectures.length / PAGE_SIZE), [filteredLectures.length]);
+  const visibleLectures = useMemo(() => filteredLectures.slice(0, page * PAGE_SIZE), [filteredLectures, page]);
+  const allMajors = useMemo(() => [...new Set(lectures.map(lecture => lecture.major))], [lectures]);
 
-  const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+  const changeSearchOption = useCallback((field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
-    setSearchOptions({ ...searchOptions, [field]: value });
+    setSearchOptions(prev => ({ ...prev, [field]: value }));
     loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  }, []);
 
-  const addSchedule = (lecture: Lecture) => {
-    if (!searchInfo) return;
+  const addSchedule = useCallback(
+    (lecture: Lecture) => {
+      if (!searchInfo) return;
 
-    const { tableId } = searchInfo;
+      const { tableId } = searchInfo;
 
-    const schedules = parseSchedule(lecture.schedule).map(schedule => ({
-      ...schedule,
-      lecture,
-    }));
+      const schedules = parseSchedule(lecture.schedule).map(schedule => ({
+        ...schedule,
+        lecture,
+      }));
 
-    setSchedulesMap(prev => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules],
-    }));
+      setSchedulesMap(prev => ({
+        ...prev,
+        [tableId]: [...prev[tableId], ...schedules],
+      }));
 
-    onClose();
-  };
+      onClose();
+    },
+    [searchInfo, setSchedulesMap, onClose],
+  );
 
   useEffect(() => {
     const start = performance.now();
