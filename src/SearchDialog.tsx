@@ -85,13 +85,26 @@ const PAGE_SIZE = 100;
 const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
 const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
 
+const createCachedFetch = () => {
+  const cache = new Map<string, Promise<{ data: Lecture[] }>>();
+  
+  return (key: string, fetchFn: () => Promise<{ data: Lecture[] }>) => {
+    if (!cache.has(key)) {
+      cache.set(key, fetchFn());
+    }
+    return cache.get(key)!;
+  };
+};
+
+const cachedFetch = createCachedFetch();
+
 const fetchAllLectures = async () => await Promise.all([
-  (() => { console.log('API Call 1', performance.now()); return fetchMajors(); })(),
-  (() => { console.log('API Call 2', performance.now()); return fetchLiberalArts(); })(),
-  (() => { console.log('API Call 3', performance.now()); return fetchMajors(); })(),
-  (() => { console.log('API Call 4', performance.now()); return fetchLiberalArts(); })(),
-  (() => { console.log('API Call 5', performance.now()); return fetchMajors(); })(),
-  (() => { console.log('API Call 6', performance.now()); return fetchLiberalArts(); })()
+  (() => { console.log('API Call 1', performance.now()); return cachedFetch('majors', fetchMajors); })(),
+  (() => { console.log('API Call 2', performance.now()); return cachedFetch('liberalArts', fetchLiberalArts); })(),
+  (() => { console.log('API Call 3', performance.now()); return cachedFetch('majors', fetchMajors); })(),
+  (() => { console.log('API Call 4', performance.now()); return cachedFetch('liberalArts', fetchLiberalArts); })(),
+  (() => { console.log('API Call 5', performance.now()); return cachedFetch('majors', fetchMajors); })(),
+  (() => { console.log('API Call 6', performance.now()); return cachedFetch('liberalArts', fetchLiberalArts); })()
 ]);
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
