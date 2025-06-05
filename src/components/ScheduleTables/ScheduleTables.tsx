@@ -1,6 +1,6 @@
-import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
-import ScheduleTable from "../ScheduleTable/ScheduleTable.tsx";
-import { useScheduleContext } from "../../providers/ScheduleContext.tsx";
+import { Flex, Stack } from "@chakra-ui/react";
+import { ScheduleTable, ScheduleTableHeader } from "../ScheduleTable";
+import { useScheduleContext } from "@/providers/ScheduleContext";
 import { SearchDialog } from "@/components/SearchDialog";
 import { useCallback, useMemo, useState } from "react";
 import { useDndContext } from "@dnd-kit/core";
@@ -13,7 +13,9 @@ const ScheduleTables = () => {
     time?: number;
   } | null>(null);
 
-  const disabledRemoveButton = Object.keys(schedulesMap).length === 1;
+  const disabledRemoveButton = useMemo(() => {
+    return Object.keys(schedulesMap).length === 1;
+  }, [schedulesMap]);
   const { active } = useDndContext();
 
   const activeTableId = useMemo(() => {
@@ -24,19 +26,29 @@ const ScheduleTables = () => {
     return null;
   }, [active]);
 
-  const duplicate = (targetId: string) => {
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]],
-    }));
-  };
+  const handleAddScheduleClick = useCallback((tableId: string) => {
+    setSearchInfo((prev) => ({ ...prev, tableId }));
+  }, []);
 
-  const remove = (targetId: string) => {
-    setSchedulesMap((prev) => {
-      delete prev[targetId];
-      return { ...prev };
-    });
-  };
+  const handleDuplicateScheduleClick = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [`schedule-${Date.now()}`]: [...prev[targetId]],
+      }));
+    },
+    [setSchedulesMap],
+  );
+
+  const handleRemoveScheduleClick = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => {
+        delete prev[targetId];
+        return { ...prev };
+      });
+    },
+    [setSchedulesMap],
+  );
 
   const handleScheduleTimeClick = useCallback(
     (tableId: string, timeInfo: { day: string; time: number }) => {
@@ -56,7 +68,7 @@ const ScheduleTables = () => {
         ),
       }));
     },
-    [],
+    [setSchedulesMap],
   );
 
   return (
@@ -70,36 +82,14 @@ const ScheduleTables = () => {
           <Stack
             key={tableId}
             width="600px">
-            <Flex
-              justifyContent="space-between"
-              alignItems="center">
-              <Heading
-                as="h3"
-                fontSize="lg">
-                시간표 {index + 1}
-              </Heading>
-              <ButtonGroup
-                size="sm"
-                isAttached>
-                <Button
-                  colorScheme="green"
-                  onClick={() => setSearchInfo({ tableId })}>
-                  시간표 추가
-                </Button>
-                <Button
-                  colorScheme="green"
-                  mx="1px"
-                  onClick={() => duplicate(tableId)}>
-                  복제
-                </Button>
-                <Button
-                  colorScheme="green"
-                  isDisabled={disabledRemoveButton}
-                  onClick={() => remove(tableId)}>
-                  삭제
-                </Button>
-              </ButtonGroup>
-            </Flex>
+            <ScheduleTableHeader
+              index={index}
+              tableId={tableId}
+              disabledRemoveButton={disabledRemoveButton}
+              onAddScheduleClick={handleAddScheduleClick}
+              onDuplicateScheduleClick={handleDuplicateScheduleClick}
+              onRemoveScheduleClick={handleRemoveScheduleClick}
+            />
             <ScheduleTable
               key={`schedule-table-${index}`}
               schedules={schedules}
