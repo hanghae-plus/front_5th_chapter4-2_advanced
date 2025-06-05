@@ -182,10 +182,15 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   const changeSearchOption = useCallback(
     (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      if (JSON.stringify(searchOptions[field]) === JSON.stringify(value)) {
+        return;
+      }
       setPage(1);
-      setSearchOptions(({ ...searchOptions, [field]: value }));
+      setSearchOptions((prev) => ({ ...prev, [field]: value }));
       loaderWrapperRef.current?.scrollTo(0, 0);
-    }, []);
+    },
+    [loaderWrapperRef, searchOptions, setSearchOptions]
+  );
 
   const addSchedule = (lecture: Lecture) => {
     if (!searchInfo) return;
