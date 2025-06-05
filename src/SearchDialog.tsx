@@ -113,6 +113,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [page, setPage] = useState(1);
   const [searchOptions, setSearchOptions] = useState<SearchOption>({
@@ -166,17 +167,24 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     }, []);
   }, [lectures, searchOptions, parsedSchedules]);
 
+  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+  
+  const visibleLectures = useMemo(() => 
+    filteredLectures.slice(0, page * PAGE_SIZE),
+    [filteredLectures, page]
+  );
+
   const allMajors = useMemo(() => 
     [...new Set(lectures.map(lecture => lecture.major))],
     [lectures]
   );
 
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-
   const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
-    setSearchOptions(({ ...searchOptions, [field]: value }));
+    setSearchOptions(prev => ({
+      ...prev,
+      [field]: value
+    }));
     loaderWrapperRef.current?.scrollTo(0, 0);
   };
 
@@ -217,26 +225,43 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting) {
-          setPage(prevPage => Math.min(lastPage, prevPage + 1));
-        }
-      },
-      { threshold: 0, root: $loaderWrapper }
-    );
+    // observer가 이미 존재하면 재사용
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting) {
+            setPage(prevPage => Math.min(lastPage, prevPage + 1));
+          }
+        },
+        { threshold: 0, root: $loaderWrapper }
+      );
+    }
 
-    observer.observe($loader);
+    observerRef.current.observe($loader);
 
-    return () => observer.unobserve($loader);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.unobserve($loader);
+      }
+    };
   }, [lastPage]);
+
+  // 컴포넌트가 언마운트될 때 observer 정리
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setSearchOptions(prev => ({
       ...prev,
       days: searchInfo?.day ? [searchInfo.day] : [],
-      times: searchInfo?.time ? [searchInfo.time] : [],
-    }))
+      times: searchInfo?.time ? [searchInfo.time] : []
+    }));
     setPage(1);
   }, [searchInfo]);
 
