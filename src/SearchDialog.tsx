@@ -113,6 +113,110 @@ const MajorCheckboxItem = memo(
   }
 );
 
+const TimeCheckboxItem = memo(
+  ({
+    id,
+    label,
+    isChecked,
+    onChange,
+  }: {
+    id: number;
+    label: string;
+    isChecked: boolean;
+    onChange: (id: number, checked: boolean) => void;
+  }) => {
+    return (
+      <Box>
+        <Checkbox
+          size="sm"
+          value={id}
+          isChecked={isChecked}
+          onChange={(e) => onChange(id, e.target.checked)}
+        >
+          {id}교시({label})
+        </Checkbox>
+      </Box>
+    );
+  }
+);
+
+const LectureRow = memo(
+  ({
+    lecture,
+    onAddSchedule,
+  }: {
+    lecture: LectureWithParsedSchedule;
+    onAddSchedule: (lecture: LectureWithParsedSchedule) => void;
+  }) => {
+    return (
+      <Tr>
+        <Td width="100px">{lecture.id}</Td>
+        <Td width="50px">{lecture.grade}</Td>
+        <Td width="200px">{lecture.title}</Td>
+        <Td width="50px">{lecture.credits}</Td>
+        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }} />
+        <Td
+          width="150px"
+          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
+        />
+        <Td width="80px">
+          <Button
+            size="sm"
+            colorScheme="green"
+            onClick={() => onAddSchedule(lecture)}
+          >
+            추가
+          </Button>
+        </Td>
+      </Tr>
+    );
+  }
+);
+
+const GradeCheckboxItem = memo(
+  ({
+    grade,
+    isChecked,
+    onChange,
+  }: {
+    grade: number;
+    isChecked: boolean;
+    onChange: (grade: number, checked: boolean) => void;
+  }) => {
+    return (
+      <Checkbox
+        value={grade}
+        isChecked={isChecked}
+        onChange={(e) => onChange(grade, e.target.checked)}
+      >
+        {grade}학년
+      </Checkbox>
+    );
+  }
+);
+
+const DayCheckboxItem = memo(
+  ({
+    day,
+    isChecked,
+    onChange,
+  }: {
+    day: string;
+    isChecked: boolean;
+    onChange: (day: string, checked: boolean) => void;
+  }) => {
+    return (
+      <Checkbox
+        value={day}
+        isChecked={isChecked}
+        onChange={(e) => onChange(day, e.target.checked)}
+      >
+        {day}
+      </Checkbox>
+    );
+  }
+);
+
 const fetchMajors = () => axios.get<Lecture[]>("/schedules-majors.json");
 const fetchLiberalArts = () =>
   axios.get<Lecture[]>("/schedules-liberal-arts.json");
@@ -255,6 +359,39 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     [searchOptions.majors, changeSearchOption]
   );
 
+  const handleTimeChange = useCallback(
+    (timeId: number, isChecked: boolean) => {
+      const newTimes = isChecked
+        ? [...searchOptions.times, timeId]
+        : searchOptions.times.filter((t) => t !== timeId);
+
+      changeSearchOption("times", newTimes);
+    },
+    [searchOptions.times, changeSearchOption]
+  );
+
+  const handleGradeChange = useCallback(
+    (grade: number, isChecked: boolean) => {
+      const newGrades = isChecked
+        ? [...searchOptions.grades, grade]
+        : searchOptions.grades.filter((g) => g !== grade);
+
+      changeSearchOption("grades", newGrades);
+    },
+    [searchOptions.grades, changeSearchOption]
+  );
+
+  const handleDayChange = useCallback(
+    (day: string, isChecked: boolean) => {
+      const newDays = isChecked
+        ? [...searchOptions.days, day]
+        : searchOptions.days.filter((d) => d !== day);
+
+      changeSearchOption("days", newDays);
+    },
+    [searchOptions.days, changeSearchOption]
+  );
+
   const addSchedule = useCallback(
     (lecture: LectureWithParsedSchedule) => {
       if (!searchInfo) return;
@@ -355,91 +492,77 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
             <HStack spacing={4}>
               <FormControl>
                 <FormLabel>학년</FormLabel>
-                <CheckboxGroup
-                  value={searchOptions.grades}
-                  onChange={(value) =>
-                    changeSearchOption("grades", value.map(Number))
-                  }
-                >
-                  <HStack spacing={4}>
-                    {[1, 2, 3, 4].map((grade) => (
-                      <Checkbox key={grade} value={grade}>
-                        {grade}학년
-                      </Checkbox>
-                    ))}
-                  </HStack>
-                </CheckboxGroup>
+                <HStack spacing={4}>
+                  {[1, 2, 3, 4].map((grade) => (
+                    <GradeCheckboxItem
+                      grade={grade}
+                      isChecked={searchOptions.grades.includes(grade)}
+                      onChange={handleGradeChange}
+                      key={grade}
+                    />
+                  ))}
+                </HStack>
               </FormControl>
 
               <FormControl>
                 <FormLabel>요일</FormLabel>
-                <CheckboxGroup
-                  value={searchOptions.days}
-                  onChange={(value) =>
-                    changeSearchOption("days", value as string[])
-                  }
-                >
-                  <HStack spacing={4}>
-                    {DAY_LABELS.map((day) => (
-                      <Checkbox key={day} value={day}>
-                        {day}
-                      </Checkbox>
-                    ))}
-                  </HStack>
-                </CheckboxGroup>
+                <HStack spacing={4}>
+                  {DAY_LABELS.map((day) => (
+                    <DayCheckboxItem
+                      key={day}
+                      day={day}
+                      isChecked={searchOptions.days.includes(day)}
+                      onChange={handleDayChange}
+                    />
+                  ))}
+                </HStack>
               </FormControl>
             </HStack>
 
             <HStack spacing={4}>
               <FormControl>
                 <FormLabel>시간</FormLabel>
-                <CheckboxGroup
-                  colorScheme="green"
-                  value={searchOptions.times}
-                  onChange={(values) =>
-                    changeSearchOption("times", values.map(Number))
-                  }
-                >
-                  <Wrap spacing={1} mb={2}>
-                    {searchOptions.times
-                      .sort((a, b) => a - b)
-                      .map((time) => (
-                        <Tag
-                          key={time}
-                          size="sm"
-                          variant="outline"
-                          colorScheme="blue"
-                        >
-                          <TagLabel>{time}교시</TagLabel>
-                          <TagCloseButton
-                            onClick={() =>
-                              changeSearchOption(
-                                "times",
-                                searchOptions.times.filter((v) => v !== time)
-                              )
-                            }
-                          />
-                        </Tag>
-                      ))}
-                  </Wrap>
-                  <Stack
-                    spacing={2}
-                    overflowY="auto"
-                    h="100px"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    borderRadius={5}
-                    p={2}
-                  >
-                    {TIME_SLOTS.map(({ id, label }) => (
-                      <Box key={id}>
-                        <Checkbox key={id} size="sm" value={id}>
-                          {id}교시({label})
-                        </Checkbox>
-                      </Box>
+                <Wrap spacing={1} mb={2}>
+                  {searchOptions.times
+                    .sort((a, b) => a - b)
+                    .map((time) => (
+                      <Tag
+                        key={time}
+                        size="sm"
+                        variant="outline"
+                        colorScheme="blue"
+                      >
+                        <TagLabel>{time}교시</TagLabel>
+                        <TagCloseButton
+                          onClick={() =>
+                            changeSearchOption(
+                              "times",
+                              searchOptions.times.filter((v) => v !== time)
+                            )
+                          }
+                        />
+                      </Tag>
                     ))}
-                  </Stack>
-                </CheckboxGroup>
+                </Wrap>
+                <Stack
+                  spacing={2}
+                  overflowY="auto"
+                  h="100px"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  borderRadius={5}
+                  p={2}
+                >
+                  {TIME_SLOTS.map(({ id, label }) => (
+                    <TimeCheckboxItem
+                      key={id}
+                      id={id}
+                      label={label}
+                      isChecked={searchOptions.times.includes(id)}
+                      onChange={handleTimeChange}
+                    />
+                  ))}
+                </Stack>
               </FormControl>
 
               <FormControl>
@@ -506,30 +629,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
                 <Table size="sm" variant="striped">
                   <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture)}
-                          >
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
+                    {visibleLectures.map((lecture) => (
+                      <LectureRow
+                        key={lecture.id}
+                        lecture={lecture}
+                        onAddSchedule={addSchedule}
+                      />
                     ))}
                   </Tbody>
                 </Table>
