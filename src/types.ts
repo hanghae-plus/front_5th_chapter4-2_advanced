@@ -7,9 +7,16 @@ export interface Lecture {
   grade: number;
 }
 
+export interface LectureWithLowerCased extends Lecture {
+  lowerCasedId: string;
+  lowerCasedTitle: string;
+}
+
 export interface Schedule {
-  lecture: Lecture
+  lecture: Lecture;
   day: string;
-  range: number[]
+  range: number[];
   room?: string;
 }
+
+export type ScheduleMap = Record<string, Schedule[]>;
