@@ -1,13 +1,15 @@
 import {
   DndContext,
+  DragStartEvent,
   Modifier,
   PointerSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useCallback, useState } from "react";
 import { CellSize, DAY_LABELS } from "./constants.ts";
 import { useScheduleContext } from "./ScheduleContext.tsx";
+import { useDndActiveIdContext } from "./DndActiveIdContext.tsx";
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {
@@ -47,6 +49,8 @@ const modifiers = [createSnapModifier()];
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
+  const { setActiveTableId } = useDndActiveIdContext();
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -54,6 +58,11 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
       },
     })
   );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const tableId = String(event.active.id).split(":")[0];
+    setActiveTableId(tableId);
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = (event: any) => {
@@ -80,11 +89,14 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
         };
       }),
     });
+
+    setActiveTableId(null);
   };
 
   return (
     <DndContext
       sensors={sensors}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       modifiers={modifiers}
     >

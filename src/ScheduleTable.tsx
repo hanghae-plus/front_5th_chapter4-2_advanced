@@ -15,9 +15,10 @@ import {
 import { CellSize, DAY_LABELS, 분 } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
-import { useDndContext, useDraggable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment } from "react";
+import { ComponentProps, Fragment, memo } from "react";
+import { useDndActiveIdContext } from "./DndActiveIdContext.tsx";
 
 interface Props {
   tableId: string;
@@ -44,23 +45,12 @@ const ScheduleTable = ({
   onScheduleTimeClick,
   onDeleteButtonClick,
 }: Props) => {
+  const { activeTableId } = useDndActiveIdContext();
   const getColor = (lectureId: string): string => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
     return colors[lectures.indexOf(lectureId) % colors.length];
   };
-
-  const dndContext = useDndContext();
-
-  const getActiveTableId = () => {
-    const activeId = dndContext.active?.id;
-    if (activeId) {
-      return String(activeId).split(":")[0];
-    }
-    return null;
-  };
-
-  const activeTableId = getActiveTableId();
 
   return (
     <Box
@@ -194,4 +184,4 @@ const DraggableSchedule = ({
   );
 };
 
-export default ScheduleTable;
+export default memo(ScheduleTable);
