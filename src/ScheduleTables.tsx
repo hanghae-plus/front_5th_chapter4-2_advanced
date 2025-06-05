@@ -5,6 +5,7 @@ import SearchDialog from "./SearchDialog.tsx";
 import { useMemo, useState, useCallback, memo } from "react";
 import { useDndContext } from "@dnd-kit/core";
 import { ScheduleTableContextProvider } from "./ScheduleTableContext.tsx";
+import { Schedule } from "./types.ts";
 
 interface TableActionsProps {
   tableId: string;
@@ -49,6 +50,56 @@ const TableActions = memo(
           </Button>
         </ButtonGroup>
       </Flex>
+    );
+  }
+);
+
+interface TableContainerProps {
+  tableId: string;
+  index: number;
+  schedules: Schedule[];
+  activeOutline: boolean;
+  onScheduleTimeClick: (timeInfo: { day: string; time: number }) => void;
+  onDeleteButtonClick: (timeInfo: { day: string; time: number }) => void;
+  onAdd: (tableId: string) => void;
+  onDuplicate: (tableId: string) => void;
+  onRemove: (tableId: string) => void;
+  disabledRemove: boolean;
+}
+
+const TableContainer = memo(
+  ({
+    tableId,
+    index,
+    schedules,
+    activeOutline,
+    onScheduleTimeClick,
+    onDeleteButtonClick,
+    onAdd,
+    onDuplicate,
+    onRemove,
+    disabledRemove,
+  }: TableContainerProps) => {
+    return (
+      <Stack width="600px">
+        <TableActions
+          tableId={tableId}
+          index={index}
+          onAdd={onAdd}
+          onDuplicate={onDuplicate}
+          onRemove={onRemove}
+          disabledRemove={disabledRemove}
+        />
+        <ScheduleTableContextProvider schedules={schedules}>
+          <ScheduleTable
+            key={`schedule-table-${index}`}
+            tableId={tableId}
+            activeOutline={activeOutline}
+            onScheduleTimeClick={onScheduleTimeClick}
+            onDeleteButtonClick={onDeleteButtonClick}
+          />
+        </ScheduleTableContextProvider>
+      </Stack>
     );
   }
 );
@@ -132,29 +183,23 @@ export const ScheduleTables = () => {
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
         {schedulesEntries.map(([tableId, schedules], index) => (
-          <Stack key={tableId} width="600px">
-            <TableActions
-              tableId={tableId}
-              index={index}
-              onAdd={handleAdd}
-              onDuplicate={duplicate}
-              onRemove={remove}
-              disabledRemove={disabledRemoveButton}
-            />
-            <ScheduleTableContextProvider schedules={schedules}>
-              <ScheduleTable
-                key={`schedule-table-${index}`}
-                tableId={tableId}
-                activeOutline={activeTableId === tableId}
-                onScheduleTimeClick={
-                  scheduleHandlers[index].handleScheduleTimeClick
-                }
-                onDeleteButtonClick={
-                  scheduleHandlers[index].handleDeleteButtonClick
-                }
-              />
-            </ScheduleTableContextProvider>
-          </Stack>
+          <TableContainer
+            key={tableId}
+            tableId={tableId}
+            index={index}
+            schedules={schedules}
+            activeOutline={activeTableId === tableId}
+            onScheduleTimeClick={
+              scheduleHandlers[index].handleScheduleTimeClick
+            }
+            onDeleteButtonClick={
+              scheduleHandlers[index].handleDeleteButtonClick
+            }
+            onAdd={handleAdd}
+            onDuplicate={duplicate}
+            onRemove={remove}
+            disabledRemove={disabledRemoveButton}
+          />
         ))}
       </Flex>
       <SearchDialog
