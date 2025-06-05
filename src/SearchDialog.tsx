@@ -150,8 +150,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       });
   }, [lectures, searchOptions]);
 
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
+  const lastPage = useMemo(()=>{
+    Math.ceil(filteredLectures.length / PAGE_SIZE);
+  },[filteredLectures.length]) 
+
+  // 페이지 변경 시 렌더링 최적화
+  const visibleLectures = useMemo(() => {
+    return filteredLectures.slice(0, page * PAGE_SIZE);
+  }, [filteredLectures, page]);
 
   const allMajors = useMemo(() => {
     return [...new Set(lectures.map((lecture) => lecture.major))];
