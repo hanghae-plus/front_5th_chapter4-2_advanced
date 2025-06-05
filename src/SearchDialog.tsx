@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
 	Box,
 	Button,
@@ -87,6 +87,13 @@ const fetchLiberalArts = () =>
 	axios.get<Lecture[]>("/schedules-liberal-arts.json")
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
+/**
+ * fetchAllLectures
+ * 이 함수는 전공과 교양 수업 데이터를 병렬로 가져옵니다.
+ * Promise.all을 사용하여 두 API 호출을 동시에 실행합니다.
+ * 각 API 호출은 axios.get을 사용하여 JSON 파일에서 데이터를 가져옵니다.
+ * @returns
+ */
 const fetchAllLectures = async () => {
 	console.log("Starting API Calls", performance.now())
 	const [majors, liberalArts] = await Promise.all([
@@ -98,6 +105,11 @@ const fetchAllLectures = async () => {
 }
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
+/**
+ * SearchDialog 컴포넌트는 수업 검색을 위한 모달 대화 상자입니다.
+ * @param param0
+ * @returns
+ */
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
 	const { setSchedulesMap } = useScheduleContext()
 
@@ -113,8 +125,25 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 		majors: [],
 	})
 
-	const getFilteredLectures = () => {
+	const scheduleCache = useRef<Map<string, ReturnType<typeof parseSchedule>>>(
+		new Map()
+	)
+
+	const getParsedSchedule = (lecture: Lecture) => {
+		if (!lecture.schedule) return []
+		if (!scheduleCache.current.has(lecture.id)) {
+			scheduleCache.current.set(lecture.id, parseSchedule(lecture.schedule))
+		}
+		return scheduleCache.current.get(lecture.id)!
+	}
+
+	/**
+	 * getFilteredLectures 함수는 현재 검색 옵션에 따라 필터링된 강의 목록을 반환합니다.
+	 * @returns
+	 */
+	const getFilteredLectures = useMemo(() => {
 		const { query = "", credits, grades, days, times, majors } = searchOptions
+
 		return lectures
 			.filter(
 				(lecture) =>
@@ -131,31 +160,36 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 				(lecture) => !credits || lecture.credits.startsWith(String(credits))
 			)
 			.filter((lecture) => {
-				if (days.length === 0) {
-					return true
-				}
-				const schedules = lecture.schedule
-					? parseSchedule(lecture.schedule)
-					: []
+				if (days.length === 0) return true
+				const schedules = getParsedSchedule(lecture)
 				return schedules.some((s) => days.includes(s.day))
 			})
 			.filter((lecture) => {
-				if (times.length === 0) {
-					return true
-				}
-				const schedules = lecture.schedule
-					? parseSchedule(lecture.schedule)
-					: []
+				if (times.length === 0) return true
+				const schedules = getParsedSchedule(lecture)
 				return schedules.some((s) =>
 					s.range.some((time) => times.includes(time))
 				)
 			})
-	}
+	}, [lectures, searchOptions])
 
-	const filteredLectures = getFilteredLectures()
-	const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE)
-	const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE)
-	const allMajors = [...new Set(lectures.map((lecture) => lecture.major))]
+	const filteredLectures = useMemo(
+		() => getFilteredLectures,
+		[getFilteredLectures]
+	)
+	const lastPage = useMemo(
+		() => Math.ceil(filteredLectures.length / PAGE_SIZE),
+		[filteredLectures]
+	)
+	const visibleLectures = useMemo(
+		() => filteredLectures.slice(0, page * PAGE_SIZE),
+		[filteredLectures, page]
+	)
+
+	// 모든 전공 목록을 가져옵니다.
+	const allMajors = useMemo(() => {
+		return [...new Set(lectures.map((lecture) => lecture.major))]
+	}, [lectures])
 
 	const changeSearchOption = (
 		field: keyof SearchOption,
