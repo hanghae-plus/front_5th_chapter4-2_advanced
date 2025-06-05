@@ -27,7 +27,7 @@ function createSnapModifier(): Modifier {
 
 const modifiers = [createSnapModifier()];
 
-export default function ScheduleDndProvider({ children }: PropsWithChildren) {
+export const ScheduleDndProvider = ({ children }: PropsWithChildren) => {
   const { setSchedulesMap } = useScheduleContext();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -68,4 +68,4 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
       {children}
     </DndContext>
   );
-}
+};
