@@ -1,12 +1,49 @@
 import { CellSize, DAY_LABELS, SCHEDULE_TIMES } from "@/config/constants";
+import { useLocalScheduleContext } from "@/hooks/use-local-schedule-context";
 import { fill2 } from "@/lib/utils";
-import { DayTime } from "@/types";
 import { Flex, Grid, GridItem, Text } from "@chakra-ui/react";
-import { Fragment, memo } from "react";
+import { Fragment, memo, useMemo } from "react";
 
 // ScheduleTableGrid memo 사용
-type ScheduleTableGridProps = { onScheduleTimeClick: (timeInfo: DayTime) => void };
-export const ScheduleTableGrid = memo(({ onScheduleTimeClick }: ScheduleTableGridProps) => {
+export const ScheduleTableGrid = memo(() => {
+  const { handleScheduleTimeClick } = useLocalScheduleContext();
+
+  const dayLabels = useMemo(() => {
+    console.log("asd");
+    return DAY_LABELS.map((day) => (
+      <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
+        <Flex justifyContent="center" alignItems="center" h="full">
+          <Text fontWeight="bold">{day}</Text>
+        </Flex>
+      </GridItem>
+    ));
+  }, []);
+
+  const scheduleTimes = useMemo(() => {
+    return SCHEDULE_TIMES.map((time, timeIndex) => (
+      <Fragment key={`시간-${timeIndex + 1}`}>
+        <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
+          <Flex justifyContent="center" alignItems="center" h="full">
+            <Text fontSize="xs">
+              {fill2(timeIndex + 1)} ({time})
+            </Text>
+          </Flex>
+        </GridItem>
+        {DAY_LABELS.map((day) => (
+          <GridItem
+            key={`${day}-${timeIndex + 2}`}
+            borderWidth="1px 0 0 1px"
+            borderColor="gray.300"
+            bg={timeIndex > 17 ? "gray.100" : "white"}
+            cursor="pointer"
+            _hover={{ bg: "yellow.100" }}
+            onClick={() => handleScheduleTimeClick({ day, time: timeIndex + 1 })}
+          />
+        ))}
+      </Fragment>
+    ));
+  }, [handleScheduleTimeClick]);
+
   return (
     <Grid
       templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
@@ -22,35 +59,8 @@ export const ScheduleTableGrid = memo(({ onScheduleTimeClick }: ScheduleTableGri
           <Text fontWeight="bold">교시</Text>
         </Flex>
       </GridItem>
-      {DAY_LABELS.map((day) => (
-        <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
-          <Flex justifyContent="center" alignItems="center" h="full">
-            <Text fontWeight="bold">{day}</Text>
-          </Flex>
-        </GridItem>
-      ))}
-      {SCHEDULE_TIMES.map((time, timeIndex) => (
-        <Fragment key={`시간-${timeIndex + 1}`}>
-          <GridItem borderTop="1px solid" borderColor="gray.300" bg={timeIndex > 17 ? "gray.200" : "gray.100"}>
-            <Flex justifyContent="center" alignItems="center" h="full">
-              <Text fontSize="xs">
-                {fill2(timeIndex + 1)} ({time})
-              </Text>
-            </Flex>
-          </GridItem>
-          {DAY_LABELS.map((day) => (
-            <GridItem
-              key={`${day}-${timeIndex + 2}`}
-              borderWidth="1px 0 0 1px"
-              borderColor="gray.300"
-              bg={timeIndex > 17 ? "gray.100" : "white"}
-              cursor="pointer"
-              _hover={{ bg: "yellow.100" }}
-              onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
-            />
-          ))}
-        </Fragment>
-      ))}
+      {dayLabels}
+      {scheduleTimes}
     </Grid>
   );
 });
