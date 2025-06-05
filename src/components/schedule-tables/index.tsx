@@ -1,12 +1,10 @@
-import { LocalScheduleProvider } from "@/components/providers/local-schedule-provider";
-import ScheduleTable from "@/components/schedule-table";
 import SearchDialog from "@/components/search-dialog";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
 import { DayTime, SearchInfo } from "@/types";
-import { Flex, Stack } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { useMemo, useState } from "react";
-import { ScheduleTableHeader } from "../schedule-table-header";
+import { TableWrapper } from "./table-wrapper";
 
 const ScheduleTables = () => {
   const [searchInfo, setSearchInfo] = useState<SearchInfo>(null);
@@ -49,23 +47,17 @@ const ScheduleTables = () => {
         {tableKeys.map((tableId, index) => {
           const schedules = schedulesMap[tableId];
           return (
-            <Stack key={tableId} width="600px">
-              <ScheduleTableHeader
-                tableId={tableId}
-                index={index}
-                isDisabled={disabledRemoveButton}
-                setSearchInfo={setSearchInfo}
-              />
-              <LocalScheduleProvider // table 별 Local Context API 로 재할당
-                key={tableId}
-                tableId={tableId}
-                schedules={schedules}
-                handleScheduleTimeClick={handlers[index][0]}
-                handleDeleteButtonClick={handlers[index][1]}
-              >
-                <ScheduleTable key={`schedule-table-${index}`} isActive={tableId === activeTableId} />
-              </LocalScheduleProvider>
-            </Stack>
+            <TableWrapper
+              key={tableId}
+              tableId={tableId}
+              index={index}
+              isDeletable={disabledRemoveButton}
+              setSearchInfo={setSearchInfo}
+              schedules={schedules}
+              handleScheduleTimeClick={handlers[index][0]}
+              handleDeleteButtonClick={handlers[index][1]}
+              isActive={tableId === activeTableId}
+            />
           );
         })}
       </Flex>

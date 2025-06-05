@@ -1,35 +1,49 @@
-import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
-import { memo, ReactNode } from "react";
+import { LocalScheduleProvider } from "@/components/providers/local-schedule-provider";
+import { ScheduleTableHeader } from "@/components/schedule-table-header";
+import { DayTime, Schedule, SearchInfo } from "@/types";
+import { Stack } from "@chakra-ui/react";
+import { memo } from "react";
+import ScheduleTable from "../schedule-table";
 
 type TableWrapperProps = {
+  tableId: string;
   index: number;
   isDeletable: boolean;
-  children: ReactNode;
+  schedules: Schedule[];
+  isActive: boolean;
+  setSearchInfo: React.Dispatch<React.SetStateAction<SearchInfo>>;
+  handleScheduleTimeClick: (timeInfo: DayTime) => void;
+  handleDeleteButtonClick: (timeInfo: DayTime) => void;
 };
-export const TableWrapper = memo(({ index, isDeletable, children }: TableWrapperProps) => {
-  // const { handleAddClick, handleDuplicateClick, handleDeleteClick } = useLocalScheduleContext();
-  const handleAddClick = () => {},
-    handleDuplicateClick = () => {},
-    handleDeleteClick = () => {};
-  return (
-    <Stack width="600px">
-      <Flex justifyContent="space-between" alignItems="center">
-        <Heading as="h3" fontSize="lg">
-          시간표 {index + 1}
-        </Heading>
-        <ButtonGroup size="sm" isAttached>
-          <Button colorScheme="green" onClick={handleAddClick}>
-            시간표 추가
-          </Button>
-          <Button colorScheme="green" mx="1px" onClick={handleDuplicateClick}>
-            복제
-          </Button>
-          <Button colorScheme="green" isDisabled={isDeletable} onClick={handleDeleteClick}>
-            삭제
-          </Button>
-        </ButtonGroup>
-      </Flex>
-      {children}
-    </Stack>
-  );
-});
+export const TableWrapper = memo(
+  ({
+    tableId,
+    index,
+    isDeletable,
+    schedules,
+    isActive,
+    setSearchInfo,
+    handleScheduleTimeClick,
+    handleDeleteButtonClick,
+  }: TableWrapperProps) => {
+    return (
+      <Stack key={tableId} width="600px">
+        <ScheduleTableHeader //
+          tableId={tableId}
+          index={index}
+          isDisabled={isDeletable}
+          setSearchInfo={setSearchInfo}
+        />
+        <LocalScheduleProvider // table 별 Local Context API 로 재할당
+          key={tableId}
+          tableId={tableId}
+          schedules={schedules}
+          handleScheduleTimeClick={handleScheduleTimeClick}
+          handleDeleteButtonClick={handleDeleteButtonClick}
+        >
+          <ScheduleTable key={`schedule-table-${index}`} isActive={isActive} />
+        </LocalScheduleProvider>
+      </Stack>
+    );
+  }
+);
