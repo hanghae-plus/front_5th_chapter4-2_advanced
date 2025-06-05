@@ -1,10 +1,7 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
 import { memo, useMemo, useState } from "react";
-import {
-  LocalScheduleProvider,
-  useScheduleContext,
-} from "./ScheduleContext.tsx";
+import { LocalScheduleProvider, useScheduleContext } from "./ScheduleContext.tsx";
 import ScheduleTable from "./ScheduleTable.tsx";
 import SearchDialog from "./SearchDialog.tsx";
 import { DayTime, Schedule } from "./types.ts";
@@ -17,15 +14,9 @@ export const ScheduleTables = () => {
   } | null>(null);
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
 
-  const scheduleTableList = useMemo(
-    () => Object.entries(schedulesMap),
-    [schedulesMap]
-  );
+  const scheduleTableList = useMemo(() => Object.entries(schedulesMap), [schedulesMap]);
 
-  const disabledRemoveButton = useMemo(
-    () => Object.keys(schedulesMap).length === 1,
-    [schedulesMap.length]
-  );
+  const disabledRemoveButton = useMemo(() => Object.keys(schedulesMap).length === 1, [schedulesMap]);
 
   // activeTableId는 tables 중 table 선택임으로 상위로 이동
   const dndContext = useDndContext();
@@ -58,15 +49,11 @@ export const ScheduleTables = () => {
                 delete newMap[tableId];
                 return newMap;
               }),
-            handleScheduleTimeClick: (timeInfo: DayTime) =>
-              setSearchInfo({ tableId, ...timeInfo }),
+            handleScheduleTimeClick: (timeInfo: DayTime) => setSearchInfo({ tableId, ...timeInfo }),
             handleDeleteButtonClick: ({ day, time }: DayTime) =>
               setSchedulesMap((prev) => ({
                 ...prev,
-                [tableId]: prev[tableId].filter(
-                  (schedule) =>
-                    schedule.day !== day || !schedule.range.includes(time)
-                ),
+                [tableId]: prev[tableId].filter((schedule) => schedule.day !== day || !schedule.range.includes(time)),
               })),
           } as const)
       ),
@@ -88,10 +75,7 @@ export const ScheduleTables = () => {
           />
         ))}
       </Flex>
-      <SearchDialog
-        searchInfo={searchInfo}
-        onClose={() => setSearchInfo(null)}
-      />
+      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)} />
     </>
   );
 };
@@ -134,11 +118,7 @@ const TableWrapper = memo(
             <Button colorScheme="green" mx="1px" onClick={handleDuplicateClick}>
               복제
             </Button>
-            <Button
-              colorScheme="green"
-              isDisabled={isDeletable}
-              onClick={handleDeleteClick}
-            >
+            <Button colorScheme="green" isDisabled={isDeletable} onClick={handleDeleteClick}>
               삭제
             </Button>
           </ButtonGroup>

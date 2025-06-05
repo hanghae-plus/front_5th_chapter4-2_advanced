@@ -32,9 +32,20 @@ type LocalScheduleContextType = {
   onDeleteButtonClick: (timeInfo: DayTime) => void;
 };
 
-const LocalScheduleContext = createContext<LocalScheduleContextType>({ tableId: "", schedules: [], onScheduleTimeClick: () => {}, onDeleteButtonClick: () => {} });
+const LocalScheduleContext = createContext<LocalScheduleContextType>({
+  tableId: "",
+  schedules: [],
+  onScheduleTimeClick: () => {},
+  onDeleteButtonClick: () => {},
+});
 
-export const LocalScheduleProvider = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick, children }: PropsWithChildren<LocalScheduleContextType>) => {
+export const LocalScheduleProvider = ({
+  tableId,
+  schedules,
+  onScheduleTimeClick,
+  onDeleteButtonClick,
+  children,
+}: PropsWithChildren<LocalScheduleContextType>) => {
   const contextValue = useMemo(
     () => ({
       tableId,
