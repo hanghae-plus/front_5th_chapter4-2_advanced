@@ -17,7 +17,7 @@ import { Schedule } from './types.ts';
 import { fill2, parseHnM } from './utils.ts';
 import { useDndContext, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { ComponentProps, Fragment } from 'react';
+import { ComponentProps, Fragment, useCallback, useMemo } from 'react';
 
 interface Props {
   tableId: string;
@@ -39,23 +39,40 @@ const TIMES = [
 ] as const;
 
 const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-  const getColor = (lectureId: string): string => {
-    const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-    const colors = ['#fdd', '#ffd', '#dff', '#ddf', '#fdf', '#dfd'];
-    return colors[lectures.indexOf(lectureId) % colors.length];
-  };
+  const getColor = useCallback(
+    (lectureId: string): string => {
+      const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
+      const colors = ['#fdd', '#ffd', '#dff', '#ddf', '#fdf', '#dfd'];
+      return colors[lectures.indexOf(lectureId) % colors.length];
+    },
+    [schedules],
+  );
 
   const dndContext = useDndContext();
 
-  const getActiveTableId = () => {
+  const getActiveTableId = useCallback(() => {
     const activeId = dndContext.active?.id;
     if (activeId) {
       return String(activeId).split(':')[0];
     }
     return null;
-  };
+  }, [dndContext.active?.id]);
 
-  const activeTableId = getActiveTableId();
+  const activeTableId = useMemo(() => getActiveTableId(), [getActiveTableId]);
+
+  const handleScheduleTimeClick = useCallback(
+    (timeInfo: { day: string; time: number }) => {
+      onScheduleTimeClick?.(timeInfo);
+    },
+    [onScheduleTimeClick],
+  );
+
+  const handleDeleteButtonClick = useCallback(
+    (timeInfo: { day: string; time: number }) => {
+      onDeleteButtonClick?.(timeInfo);
+    },
+    [onDeleteButtonClick],
+  );
 
   return (
     <Box position="relative" outline={activeTableId === tableId ? '5px dashed' : undefined} outlineColor="blue.300">
@@ -97,7 +114,7 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
                 bg={timeIndex > 17 ? 'gray.100' : 'white'}
                 cursor="pointer"
                 _hover={{ bg: 'yellow.100' }}
-                onClick={() => onScheduleTimeClick?.({ day, time: timeIndex + 1 })}
+                onClick={() => handleScheduleTimeClick({ day, time: timeIndex + 1 })}
               />
             ))}
           </Fragment>
@@ -111,7 +128,7 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
           data={schedule}
           bg={getColor(schedule.lecture.id)}
           onDeleteButtonClick={() =>
-            onDeleteButtonClick?.({
+            handleDeleteButtonClick({
               day: schedule.day,
               time: schedule.range[0],
             })
@@ -132,35 +149,42 @@ const DraggableSchedule = ({
   }) => {
   const { day, range, room, lecture } = data;
   const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
-  const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
-  const topIndex = range[0] - 1;
-  const size = range.length;
+
+  const leftIndex = useMemo(() => DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]), [day]);
+  const topIndex = useMemo(() => range[0] - 1, [range]);
+  const size = useMemo(() => range.length, [range]);
+
+  const style = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
+      top: `${40 + (topIndex * CellSize.HEIGHT + 1)}px`,
+      width: CellSize.WIDTH - 1 + 'px',
+      height: CellSize.HEIGHT * size - 1 + 'px',
+      bg,
+      p: 1,
+      boxSizing: 'border-box' as const,
+      cursor: 'pointer' as const,
+      transform: CSS.Translate.toString(transform),
+    }),
+    [leftIndex, topIndex, size, bg, transform],
+  );
+
+  const handlePopoverClick = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+  }, []);
 
   return (
     <Popover>
       <PopoverTrigger>
-        <Box
-          position="absolute"
-          left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-          top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-          width={CellSize.WIDTH - 1 + 'px'}
-          height={CellSize.HEIGHT * size - 1 + 'px'}
-          bg={bg}
-          p={1}
-          boxSizing="border-box"
-          cursor="pointer"
-          ref={setNodeRef}
-          transform={CSS.Translate.toString(transform)}
-          {...listeners}
-          {...attributes}
-        >
+        <Box ref={setNodeRef} {...style} {...listeners} {...attributes}>
           <Text fontSize="sm" fontWeight="bold">
             {lecture.title}
           </Text>
           <Text fontSize="xs">{room}</Text>
         </Box>
       </PopoverTrigger>
-      <PopoverContent onClick={event => event.stopPropagation()}>
+      <PopoverContent onClick={handlePopoverClick}>
         <PopoverArrow />
         <PopoverCloseButton />
         <PopoverBody>
