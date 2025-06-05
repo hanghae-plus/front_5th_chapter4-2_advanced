@@ -2,15 +2,6 @@
 
 https://front-5th-chapter4-2-advanced-alpha.vercel.app/
 
-
-## Page Speed Insight 에서 비교
-[모바일](https://pagespeed.web.dev/analysis/https-front-5th-chapter4-2-advanced-alpha-vercel-app/v5fzg4g7kn?form_factor=mobile) | [데스크탑](https://pagespeed.web.dev/analysis/https-front-5th-chapter4-2-advanced-alpha-vercel-app/v5fzg4g7kn?form_factor=desktop)
-||최적화 전|최적화 후|
-|----|-----|-----|
-|모바일|![모바일 최적화 전](./docs/imgs/image.png)|![모바일 최적화 전](./docs/imgs/image.png)|
-|데스크탑|![데스크탑 최적화 전](./docs/imgs/image-1.png)|![데스크탑 최적화 전](./docs/imgs/image-1.png)|
-
-
 ## Promise.all이해하기
 
 Promise.all은 Promise 묶음 → 한꺼번에 실행 → 모두 끝날 때까지 대기를 담당한다
