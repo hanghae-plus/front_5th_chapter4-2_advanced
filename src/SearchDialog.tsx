@@ -35,6 +35,7 @@ import { DAY_LABELS } from "./constants.ts";
 import SearchClass from "./searchClass.tsx";
 import TimeSlotItem from './TimeSlotItem.tsx';
 import LectureRow from './LectureRow.tsx';
+
 interface Props {
   searchInfo: {
     tableId: string;
@@ -45,12 +46,12 @@ interface Props {
 }
 
 interface SearchOption {
-  query?: string,
-  grades: number[],
-  days: string[],
-  times: number[],
-  majors: string[],
-  credits?: number,
+  query?: string;
+  grades: number[];
+  days: string[];
+  times: number[];
+  majors: string[];
+  credits?: number;
 }
 
 const TIME_SLOTS = [
@@ -114,9 +115,8 @@ const fetchAllLectures = async () => {
   return [majors, liberalArts];
 }
 
-// TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
-  const { setSchedulesMap } = useScheduleContext();
+  const { addSchedule } = useScheduleContext();
 
   const loaderWrapperRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -133,24 +133,30 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
-      .filter(lecture =>
-        lecture.title.toLowerCase().includes(query.toLowerCase()) ||
-        lecture.id.toLowerCase().includes(query.toLowerCase())
-      )
-      .filter(lecture => grades.length === 0 || grades.includes(lecture.grade))
-      .filter(lecture => majors.length === 0 || majors.includes(lecture.major))
-      .filter(lecture => !credits || lecture.credits.startsWith(String(credits)))
       .filter(lecture => {
-        if (days.length === 0) {
-          return true;
-        }
+        if (!query) return true;
+        return lecture.title.toLowerCase().includes(query.toLowerCase()) ||
+               lecture.id.toLowerCase().includes(query.toLowerCase());
+      })
+      .filter(lecture => {
+        if (grades.length === 0) return true;
+        return grades.includes(lecture.grade);
+      })
+      .filter(lecture => {
+        if (majors.length === 0) return true;
+        return majors.includes(lecture.major);
+      })
+      .filter(lecture => {
+        if (!credits) return true;
+        return lecture.credits.startsWith(String(credits));
+      })
+      .filter(lecture => {
+        if (days.length === 0) return true;
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => days.includes(s.day));
       })
       .filter(lecture => {
-        if (times.length === 0) {
-          return true;
-        }
+        if (times.length === 0) return true;
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
@@ -160,33 +166,35 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const visibleLectures = useMemo(() => 
     filteredLectures.slice(0, page * PAGE_SIZE)
   , [filteredLectures, page]);
+
   const allMajors = useMemo(() => 
     [...new Set(lectures.map(lecture => lecture.major))]
   , [lectures]);
 
   const changeSearchOption = useCallback((field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
-    setSearchOptions(({ ...searchOptions, [field]: value }));
+    setSearchOptions(prev => ({
+      ...prev,
+      [field]: value
+    }));
     loaderWrapperRef.current?.scrollTo(0, 0);
-  }, [searchOptions]);
+  }, []);
 
-  const addSchedule = useCallback((lecture: Lecture) => {
+  const handleAddSchedule = useCallback((lecture: Lecture) => {
     if (!searchInfo) return;
 
     const { tableId } = searchInfo;
-
     const schedules = parseSchedule(lecture.schedule).map(schedule => ({
       ...schedule,
       lecture
     }));
 
-    setSchedulesMap(prev => ({
-      ...prev,
-      [tableId]: [...prev[tableId], ...schedules]
-    }));
+    schedules.forEach(schedule => {
+      addSchedule(tableId, schedule);
+    });
 
     onClose();
-  }, [searchInfo, setSchedulesMap, onClose]);
+  }, [searchInfo, addSchedule, onClose]);
 
   useEffect(() => {
     const start = performance.now();
@@ -222,12 +230,14 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   }, [lastPage]);
 
   useEffect(() => {
-    setSearchOptions(prev => ({
-      ...prev,
-      days: searchInfo?.day ? [searchInfo.day] : [],
-      times: searchInfo?.time ? [searchInfo.time] : [],
-    }))
-    setPage(1);
+    if (searchInfo) {
+      setSearchOptions(prev => ({
+        ...prev,
+        days: searchInfo.day ? [searchInfo.day] : [],
+        times: searchInfo.time ? [searchInfo.time] : [],
+      }));
+      setPage(1);
+    }
   }, [searchInfo]);
 
   return (
@@ -252,7 +262,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 <FormLabel>학점</FormLabel>
                 <Select
                   value={searchOptions.credits}
-                  onChange={(e) => changeSearchOption('credits', e.target.value)}
+                  onChange={(e) => changeSearchOption('credits', e.target.value ? Number(e.target.value) : undefined)}
                 >
                   <option value="">전체</option>
                   <option value="1">1학점</option>
@@ -349,14 +359,17 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <Box overflowY="auto" maxH="500px" ref={loaderWrapperRef}>
                 <Table size="sm" variant="striped">
                   <Tbody>
-                    {visibleLectures.map((lecture, index) => (
-                      <LectureRow
-                        key={`${lecture.id}-${index}`}
-                        lecture={lecture}
-                        index={index}
-                        addSchedule={addSchedule}
-                      />
-                    ))}
+                    {visibleLectures.map((lecture: Lecture, index: number) => {
+                      const cleanMajor = lecture.major.replace(/<[^>]*>/g, '').trim();
+                      const uniqueKey = `${lecture.id}-${cleanMajor}-${lecture.grade}-${lecture.schedule}-${index}`;
+                      return (
+                        <LectureRow
+                          key={uniqueKey}
+                          lecture={lecture}
+                          addSchedule={handleAddSchedule}
+                        />
+                      );
+                    })}
                   </Tbody>
                 </Table>
                 <Box ref={loaderRef} h="20px"/>
