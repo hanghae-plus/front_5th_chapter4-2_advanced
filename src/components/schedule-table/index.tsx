@@ -7,6 +7,7 @@ import { ScheduleTableGrid } from "./schedule-table-grid";
 // ScheduleTable 에 memo 사용, Props중 다른 table과 영향이 있는 isActive를 제외하고 나머진 Context API에서 useMemo로 하달해서 사용됨
 const ScheduleTable = memo(({ isActive = false }: { isActive: boolean }) => {
   const { tableId, schedules, handleDeleteButtonClick: handlers } = useLocalScheduleContext();
+
   const colorMap = useMemo(() => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];

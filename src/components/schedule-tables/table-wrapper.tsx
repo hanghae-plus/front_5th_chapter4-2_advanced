@@ -1,4 +1,3 @@
-import { useLocalScheduleContext } from "@/hooks/use-local-schedule-context";
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { memo, ReactNode } from "react";
 
@@ -8,7 +7,10 @@ type TableWrapperProps = {
   children: ReactNode;
 };
 export const TableWrapper = memo(({ index, isDeletable, children }: TableWrapperProps) => {
-  const { handleAddClick, handleDuplicateClick, handleDeleteClick } = useLocalScheduleContext();
+  // const { handleAddClick, handleDuplicateClick, handleDeleteClick } = useLocalScheduleContext();
+  const handleAddClick = () => {},
+    handleDuplicateClick = () => {},
+    handleDeleteClick = () => {};
   return (
     <Stack width="600px">
       <Flex justifyContent="space-between" alignItems="center">

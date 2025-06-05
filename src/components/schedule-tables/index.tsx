@@ -2,10 +2,10 @@ import { LocalScheduleProvider } from "@/components/providers/local-schedule-pro
 import ScheduleTable from "@/components/schedule-table";
 import SearchDialog from "@/components/search-dialog";
 import { useScheduleContext } from "@/hooks/use-schedule-context";
-import { DayTime, TableHandlers } from "@/types";
+import { DayTime } from "@/types";
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import { useDndContext } from "@dnd-kit/core";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const ScheduleTables = () => {
   const [searchInfo, setSearchInfo] = useState<{
@@ -14,8 +14,6 @@ const ScheduleTables = () => {
     time?: number;
   } | null>(null);
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
-
-  const scheduleTableList = useMemo(() => Object.entries(schedulesMap), [schedulesMap]);
 
   const disabledRemoveButton = useMemo(() => Object.keys(schedulesMap).length === 1, [schedulesMap]);
 
@@ -30,41 +28,50 @@ const ScheduleTables = () => {
     return null;
   }, [dndContext.active?.id]);
 
-  const duplicate = (targetId: string) => {
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [`schedule-${Date.now()}`]: [...prev[targetId]],
-    }));
-  };
+  const duplicate = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => ({
+        ...prev,
+        [`schedule-${Date.now()}`]: [...prev[targetId]],
+      }));
+    },
+    [setSchedulesMap]
+  );
 
-  const remove = (targetId: string) => {
-    setSchedulesMap((prev) => {
-      delete prev[targetId];
-      return { ...prev };
-    });
-  };
+  const remove = useCallback(
+    (targetId: string) => {
+      setSchedulesMap((prev) => {
+        delete prev[targetId];
+        return { ...prev };
+      });
+    },
+    [setSchedulesMap]
+  );
+
+  // string Key 배열로 확인
+  const tableKeys = useMemo(() => Object.keys(schedulesMap).map((tableId) => tableId), [schedulesMap]);
 
   // 각각의 table 별 handler를 미리 선언해 다른 테이블에 영향이 없도록 수정
-  const handlers: TableHandlers[] = useMemo(() => {
-    console.log("갱신");
-    return scheduleTableList.map(
+  const handlers = useMemo(() => {
+    console.log("갱신?");
+    return tableKeys.map(
       ([tableId]) =>
-        ({
-          handleScheduleTimeClick: (timeInfo: DayTime) => setSearchInfo({ tableId, ...timeInfo }),
-          handleDeleteButtonClick: ({ day, time }: DayTime) =>
+        [
+          (timeInfo: DayTime) => setSearchInfo({ tableId, ...timeInfo }),
+          ({ day, time }: DayTime) =>
             setSchedulesMap((prev) => ({
               ...prev,
               [tableId]: prev[tableId].filter((schedule) => schedule.day !== day || !schedule.range.includes(time)),
             })),
-        } as const)
+        ] as const
     );
-  }, [setSchedulesMap, scheduleTableList]);
+  }, [setSchedulesMap, tableKeys]);
 
   return (
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
-        {scheduleTableList.map(([tableId, schedules], index) => {
-          const handler = handlers[index];
+        {tableKeys.map((tableId, index) => {
+          const schedules = schedulesMap[tableId];
           return (
             <Stack key={tableId} width="600px">
               <Flex justifyContent="space-between" alignItems="center">
@@ -87,8 +94,8 @@ const ScheduleTables = () => {
                 key={tableId}
                 tableId={tableId}
                 schedules={schedules}
-                handleScheduleTimeClick={handler.handleScheduleTimeClick}
-                handleDeleteButtonClick={handler.handleDeleteButtonClick}
+                handleScheduleTimeClick={handlers[index][0]}
+                handleDeleteButtonClick={handlers[index][1]}
               >
                 <ScheduleTable key={`schedule-table-${index}`} isActive={tableId === activeTableId} />
               </LocalScheduleProvider>
