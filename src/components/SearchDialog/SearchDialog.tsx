@@ -17,7 +17,7 @@ import LectureTable from "./LectureTable";
 import MajorSelect from "./MajorSelect";
 import SearchInput from "./SearchInput";
 import TimeSelect from "./TimeSelect";
-import { useScheduleContext } from "@/ScheduleContext.tsx";
+import { useScheduleContext } from "@/providers/ScheduleContext";
 import fetchApi from "@/lib/fetchApi.ts";
 import { Lecture } from "@/types.ts";
 import { parseSchedule } from "@/utils.ts";
