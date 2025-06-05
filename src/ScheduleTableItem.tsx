@@ -1,15 +1,8 @@
 import { memo, useCallback } from "react";
-import { useScheduleContext, useSchedules } from "./ScheduleContext.tsx"; // 🔥 useSchedules 훅 추가
+import { useScheduleContext, useSchedules } from "./ScheduleContext.tsx";
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
 import ScheduleTable from "./ScheduleTable.tsx";
-
-interface SearchInfo {
-  tableId: string;
-  day?: string;
-  time?: number;
-}
-
-type SearchClickEvent = string | SearchInfo;
+import { SearchClickEvent } from "./ScheduleTables.tsx"; // 🔥 타입 import
 
 interface ScheduleTableItemProps {
   tableId: string;
@@ -29,6 +22,7 @@ export const ScheduleTableItem = memo(
     onRemove,
     disabledRemoveButton,
   }: ScheduleTableItemProps) => {
+    // 🔥 특정 테이블의 스케줄만 구독 (다른 테이블 변경 시 리렌더링 방지)
     const schedules = useSchedules(tableId);
     const { removeSchedule } = useScheduleContext();
 
@@ -85,7 +79,6 @@ export const ScheduleTableItem = memo(
           </ButtonGroup>
         </Flex>
         <ScheduleTable
-          key={`schedule-table-${index}`}
           schedules={schedules}
           tableId={tableId}
           onScheduleTimeClick={handleScheduleTimeClick}

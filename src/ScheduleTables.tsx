@@ -4,13 +4,14 @@ import SearchDialog from "./SearchDialog.tsx";
 import { useCallback, useState } from "react";
 import { ScheduleTableItem } from "./ScheduleTableItem.tsx";
 
-interface SearchInfo {
+// 🔥 타입 정의를 별도 파일로 분리하거나 여기서 한 번만 정의
+export interface SearchInfo {
   tableId: string;
   day?: string;
   time?: number;
 }
 
-type SearchClickEvent = string | SearchInfo;
+export type SearchClickEvent = string | SearchInfo;
 
 export const ScheduleTables = () => {
   const tableIds = useTableIds();

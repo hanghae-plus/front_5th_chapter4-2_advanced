@@ -1,34 +1,124 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {
   createContext,
   PropsWithChildren,
   useContext,
-  useState,
-  useCallback,
+  useReducer,
   useMemo,
+  useCallback,
+  useRef,
 } from "react";
 import { Schedule } from "./types.ts";
 import dummyScheduleMap from "./dummyScheduleMap.ts";
 
+type ScheduleAction =
+  | {
+      type: "UPDATE_TABLE";
+      payload: { tableId: string; schedules: Schedule[] };
+    }
+  | { type: "ADD_SCHEDULE"; payload: { tableId: string; schedule: Schedule } }
+  | {
+      type: "REMOVE_SCHEDULE";
+      payload: { tableId: string; day: string; time: number };
+    }
+  | { type: "DUPLICATE_TABLE"; payload: { sourceId: string; targetId: string } }
+  | { type: "REMOVE_TABLE"; payload: { tableId: string } }
+  | {
+      type: "MOVE_SCHEDULE";
+      payload: {
+        tableId: string;
+        index: number;
+        newDay: string;
+        newRange: number[];
+      };
+    }
+  | { type: "SET_SCHEDULES_MAP"; payload: Record<string, Schedule[]> };
+
+// 리듀서 함수
+const scheduleReducer = (
+  state: Record<string, Schedule[]>,
+  action: ScheduleAction
+): Record<string, Schedule[]> => {
+  switch (action.type) {
+    case "UPDATE_TABLE":
+      return {
+        ...state,
+        [action.payload.tableId]: action.payload.schedules,
+      };
+
+    case "ADD_SCHEDULE":
+      return {
+        ...state,
+        [action.payload.tableId]: [
+          ...state[action.payload.tableId],
+          action.payload.schedule,
+        ],
+      };
+
+    case "REMOVE_SCHEDULE":
+      return {
+        ...state,
+        [action.payload.tableId]: state[action.payload.tableId].filter(
+          (schedule) =>
+            schedule.day !== action.payload.day ||
+            !schedule.range.includes(action.payload.time)
+        ),
+      };
+
+    case "DUPLICATE_TABLE":
+      return {
+        ...state,
+        [action.payload.targetId]: [...state[action.payload.sourceId]],
+      };
+
+    case "REMOVE_TABLE": {
+      // 🔥 unused variable 에러 해결: delete 연산자 사용
+      const newState = { ...state };
+      delete newState[action.payload.tableId];
+      return newState;
+    }
+
+    // 🔥 DnD를 위한 전용 액션 추가
+    case "MOVE_SCHEDULE":
+      return {
+        ...state,
+        [action.payload.tableId]: state[action.payload.tableId].map(
+          (schedule, index) =>
+            index === action.payload.index
+              ? {
+                  ...schedule,
+                  day: action.payload.newDay,
+                  range: action.payload.newRange,
+                }
+              : schedule
+        ),
+      };
+
+    case "SET_SCHEDULES_MAP":
+      return action.payload;
+
+    default:
+      return state;
+  }
+};
+
+// 컨텍스트 타입 정의
 interface ScheduleContextType {
   schedulesMap: Record<string, Schedule[]>;
-
-  // 세분화된 업데이트 함수들
-  updateSchedule: (
-    tableId: string,
-    scheduleIndex: number,
-    newSchedule: Schedule
-  ) => void;
-  addSchedules: (tableId: string, schedules: Schedule[]) => void;
+  updateTable: (tableId: string, schedules: Schedule[]) => void;
+  addSchedule: (tableId: string, schedule: Schedule) => void;
   removeSchedule: (tableId: string, day: string, time: number) => void;
-
-  // 테이블 관리 함수들
-  duplicateTable: (sourceTableId: string) => void;
+  duplicateTable: (sourceId: string) => void;
   removeTable: (tableId: string) => void;
-
-  // 기존 코드와의 호환성을 위해 임시로 유지
-  setSchedulesMap: React.Dispatch<
-    React.SetStateAction<Record<string, Schedule[]>>
-  >;
+  moveSchedule: (
+    tableId: string,
+    index: number,
+    newDay: string,
+    newRange: number[]
+  ) => void;
+  setSchedulesMap: (
+    action: React.SetStateAction<Record<string, Schedule[]>>
+  ) => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(
@@ -43,133 +133,98 @@ export const useScheduleContext = () => {
   return context;
 };
 
-// 🔥 핵심 개선: 특정 테이블만 구독 (schedulesMap을 직접 참조)
-export const useSchedules = (tableId: string) => {
-  const { schedulesMap } = useScheduleContext();
-  // 🎯 오직 해당 tableId의 배열 참조가 변경될 때만 리렌더링
-  return useMemo(() => schedulesMap[tableId] || [], [schedulesMap[tableId]]);
-};
-
-// 테이블 키 목록만 구독 (실제 키 변경시에만 업데이트)
 export const useTableIds = () => {
   const { schedulesMap } = useScheduleContext();
-  const tableKeys = Object.keys(schedulesMap);
+  return useMemo(() => Object.keys(schedulesMap), [schedulesMap]);
+};
 
-  // 🎯 테이블 개수나 키가 실제로 변경될 때만 리렌더링
-  return useMemo(() => tableKeys, [tableKeys.length, tableKeys.join(",")]);
+export const useSchedules = (tableId: string) => {
+  const { schedulesMap } = useScheduleContext();
+  return useMemo(() => schedulesMap[tableId] || [], [schedulesMap, tableId]);
 };
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] =
-    useState<Record<string, Schedule[]>>(dummyScheduleMap);
-
-  // 특정 스케줄만 업데이트 (드래그&드롭용)
-  const updateSchedule = useCallback(
-    (tableId: string, scheduleIndex: number, newSchedule: Schedule) => {
-      setSchedulesMap((prev) => {
-        const currentSchedules = prev[tableId];
-        if (!currentSchedules || scheduleIndex >= currentSchedules.length) {
-          return prev; // 유효하지 않은 경우 변경 없음
-        }
-
-        // 🎯 해당 테이블의 배열만 새로 생성 (다른 테이블은 참조 유지)
-        const updatedSchedules = currentSchedules.map((schedule, index) =>
-          index === scheduleIndex ? newSchedule : schedule
-        );
-
-        return {
-          ...prev,
-          [tableId]: updatedSchedules, // 🔥 이 테이블만 새로운 참조
-        };
-      });
-    },
-    []
+  const [schedulesMap, dispatch] = useReducer(
+    scheduleReducer,
+    dummyScheduleMap
   );
 
-  // 스케줄 추가 (SearchDialog용)
-  const addSchedules = useCallback((tableId: string, schedules: Schedule[]) => {
-    if (schedules.length === 0) return;
-
-    setSchedulesMap((prev) => ({
-      ...prev,
-      [tableId]: [...(prev[tableId] || []), ...schedules], // 🔥 이 테이블만 새로운 참조
-    }));
+  // 메모이제이션된 액션 디스패처들
+  const updateTable = useCallback((tableId: string, schedules: Schedule[]) => {
+    dispatch({ type: "UPDATE_TABLE", payload: { tableId, schedules } });
   }, []);
 
-  // 스케줄 제거
+  const addSchedule = useCallback((tableId: string, schedule: Schedule) => {
+    dispatch({ type: "ADD_SCHEDULE", payload: { tableId, schedule } });
+  }, []);
+
   const removeSchedule = useCallback(
     (tableId: string, day: string, time: number) => {
-      setSchedulesMap((prev) => {
-        const currentSchedules = prev[tableId] || [];
-        const newSchedules = currentSchedules.filter(
-          (schedule) => schedule.day !== day || !schedule.range.includes(time)
-        );
+      dispatch({ type: "REMOVE_SCHEDULE", payload: { tableId, day, time } });
+    },
+    []
+  );
 
-        // 변경이 없으면 이전 상태 유지
-        if (currentSchedules.length === newSchedules.length) {
-          return prev;
-        }
+  const duplicateTable = useCallback((sourceId: string) => {
+    const targetId = `schedule-${Date.now()}`;
+    dispatch({ type: "DUPLICATE_TABLE", payload: { sourceId, targetId } });
+  }, []);
 
-        return {
-          ...prev,
-          [tableId]: newSchedules, // 🔥 이 테이블만 새로운 참조
-        };
+  const removeTable = useCallback((tableId: string) => {
+    dispatch({ type: "REMOVE_TABLE", payload: { tableId } });
+  }, []);
+
+  // 🔥 DnD를 위한 전용 액션
+  const moveSchedule = useCallback(
+    (tableId: string, index: number, newDay: string, newRange: number[]) => {
+      dispatch({
+        type: "MOVE_SCHEDULE",
+        payload: { tableId, index, newDay, newRange },
       });
     },
     []
   );
 
-  // 테이블 복제
-  const duplicateTable = useCallback((sourceTableId: string) => {
-    setSchedulesMap((prev) => {
-      if (!prev[sourceTableId]) return prev;
+  const currentStateRef = useRef(schedulesMap);
+  currentStateRef.current = schedulesMap;
 
-      return {
-        ...prev,
-        [`schedule-${Date.now()}`]: [...prev[sourceTableId]], // 새 테이블 추가
-      };
-    });
-  }, []);
+  const setSchedulesMap = useCallback(
+    (action: React.SetStateAction<Record<string, Schedule[]>>) => {
+      if (typeof action === "function") {
+        const newState = action(currentStateRef.current);
+        dispatch({ type: "SET_SCHEDULES_MAP", payload: newState });
+      } else {
+        dispatch({ type: "SET_SCHEDULES_MAP", payload: action });
+      }
+    },
+    []
+  );
 
-  // 테이블 제거
-  const removeTable = useCallback((tableId: string) => {
-    setSchedulesMap((prev) => {
-      if (!prev[tableId]) return prev;
-
-      const newMap = { ...prev };
-      delete newMap[tableId];
-      return newMap;
-    });
-  }, []);
-
-  const value = useMemo(
+  const contextValue = useMemo(
     () => ({
-      // 🔥 핵심: schedulesMap 직접 노출
       schedulesMap,
-
-      // 업데이트 함수들
-      updateSchedule,
-      addSchedules,
+      updateTable,
+      addSchedule,
       removeSchedule,
       duplicateTable,
       removeTable,
-
-      // 기존 API (호환성)
+      moveSchedule,
       setSchedulesMap,
     }),
     [
       schedulesMap,
-      updateSchedule,
-      addSchedules,
+      updateTable,
+      addSchedule,
       removeSchedule,
       duplicateTable,
       removeTable,
-      setSchedulesMap,
+      moveSchedule,
+      setSchedulesMap, // 🔥 의존성 추가
     ]
   );
 
   return (
-    <ScheduleContext.Provider value={value}>
+    <ScheduleContext.Provider value={contextValue}>
       {children}
     </ScheduleContext.Provider>
   );
