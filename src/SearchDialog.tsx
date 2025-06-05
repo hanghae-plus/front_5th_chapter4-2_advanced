@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -86,14 +86,15 @@ const fetchMajors = () => axios.get<Lecture[]>('/schedules-majors.json');
 const fetchLiberalArts = () => axios.get<Lecture[]>('/schedules-liberal-arts.json');
 
 // TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
-const fetchAllLectures = async () => await Promise.all([
-  (console.log('API Call 1', performance.now()), await fetchMajors()),
-  (console.log('API Call 2', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 3', performance.now()), await fetchMajors()),
-  (console.log('API Call 4', performance.now()), await fetchLiberalArts()),
-  (console.log('API Call 5', performance.now()), await fetchMajors()),
-  (console.log('API Call 6', performance.now()), await fetchLiberalArts()),
-]);
+const fetchAllLectures = async () => {
+  console.log("Starting API Calls", performance.now())
+	const [majors, liberalArts] = await Promise.all([
+		fetchMajors(),
+		fetchLiberalArts(),
+	])
+	console.log("API Calls Completed", performance.now())
+	return [majors, liberalArts]
+}
 
 // TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
@@ -111,7 +112,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(lecture =>
@@ -135,22 +136,32 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
-  }
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
+  const visibleLectures = useMemo(
+    () => filteredLectures.slice(0, page * PAGE_SIZE),
+    [filteredLectures, page]
+  );
 
-  const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
-    setPage(1);
-    setSearchOptions(({ ...searchOptions, [field]: value }));
-    loaderWrapperRef.current?.scrollTo(0, 0);
-  };
+  const lastPage = useMemo(
+    () => Math.ceil(filteredLectures.length / PAGE_SIZE),
+    [filteredLectures]
+  );
+
+  const allMajors = useMemo(
+    () => [...new Set(lectures.map(lecture => lecture.major))],
+    [lectures]
+  );
+
+  const changeSearchOption = useCallback(
+    (field: keyof SearchOption, value: SearchOption[typeof field]) => {
+      setPage(1);
+      setSearchOptions(({ ...searchOptions, [field]: value }));
+      loaderWrapperRef.current?.scrollTo(0, 0);
+    }, []);
 
   const addSchedule = (lecture: Lecture) => {
     if (!searchInfo) return;
-
     const { tableId } = searchInfo;
 
     const schedules = parseSchedule(lecture.schedule).map(schedule => ({
@@ -173,32 +184,37 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       const end = performance.now();
       console.log('모든 API 호출 완료 ', end)
       console.log('API 호출에 걸린 시간(ms): ', end - start)
-      setLectures(results.flatMap(result => result.data));
-    })
+      setLectures(
+        results.flatMap(result =>
+          result.data.map(lecture => ({
+            ...lecture,
+            parsedSchedule: parseSchedule(lecture.schedule)
+          }))
+        )
+      );
+    });
   }, []);
 
+  //무한 스크롤 개선
   useEffect(() => {
     const $loader = loaderRef.current;
-    const $loaderWrapper = loaderWrapperRef.current;
-
-    if (!$loader || !$loaderWrapper) {
-      return;
-    }
+    const $wrapper = loaderWrapperRef.current;
+    if (!$loader || !$wrapper) return;
 
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting) {
-          setPage(prevPage => Math.min(lastPage, prevPage + 1));
+          setPage(prev => Math.min(prev + 1, lastPage));
         }
       },
-      { threshold: 0, root: $loaderWrapper }
+      { threshold: 0, root: $wrapper }
     );
 
     observer.observe($loader);
-
-    return () => observer.unobserve($loader);
+    return () => observer.disconnect();
   }, [lastPage]);
 
+  //searchInfo가 변경될 때마다 검색 조건 초기화
   useEffect(() => {
     setSearchOptions(prev => ({
       ...prev,
