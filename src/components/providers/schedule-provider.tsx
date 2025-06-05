@@ -5,6 +5,12 @@ import { PropsWithChildren, useMemo, useState } from "react";
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
-  const tmp = useMemo(() => ({ ...schedulesMap }), [schedulesMap]);
-  return <ScheduleContext.Provider value={{ schedulesMap: tmp, setSchedulesMap }}>{children}</ScheduleContext.Provider>;
+  const contextValue = useMemo(
+    () => ({
+      schedulesMap,
+      setSchedulesMap,
+    }),
+    [schedulesMap, setSchedulesMap]
+  );
+  return <ScheduleContext.Provider value={contextValue}>{children}</ScheduleContext.Provider>;
 };

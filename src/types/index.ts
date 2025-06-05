@@ -30,7 +30,8 @@ export type DialogChildProps = {
   changeSearchOption: (field: keyof SearchOption, value: SearchOption[typeof field]) => void;
 };
 
-export type TableHandlers = {
-  handleScheduleTimeClick: (timeInfo: DayTime) => void;
-  handleDeleteButtonClick: (timeInfo: DayTime) => void;
-};
+export type SearchInfo = {
+  tableId: string;
+  day?: string;
+  time?: number;
+} | null;
