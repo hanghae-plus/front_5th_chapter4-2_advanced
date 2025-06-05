@@ -3,14 +3,12 @@ import ScheduleTable from './ScheduleTable.tsx';
 import { useScheduleContext } from './ScheduleContext.tsx';
 import SearchDialog from './SearchDialog.tsx';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { useActiveTableId } from './hooks/useActiveTableId.ts';
 import ScheduleDndProvider from './ScheduleDndProvider.tsx';
 
 const MemoizedScheduleTable = memo(ScheduleTable);
 
 export const ScheduleTables = () => {
   const { schedulesMap, setSchedulesMap } = useScheduleContext();
-  const activeTableId = useActiveTableId();
 
   const [searchInfo, setSearchInfo] = useState<{
     tableId: string;
@@ -98,7 +96,6 @@ export const ScheduleTables = () => {
                 key={`schedule-table-${index}`}
                 schedules={schedulesMap[tableId]}
                 tableId={tableId}
-                activeTableId={activeTableId}
                 onScheduleTimeClick={(timeInfo) =>
                   handleScheduleTimeClick(tableId, timeInfo)
                 }
