@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
-  Button,
   Checkbox,
   CheckboxGroup,
   FormControl,
@@ -21,7 +20,6 @@ import {
   TagCloseButton,
   TagLabel,
   Tbody,
-  Td,
   Text,
   Th,
   Thead,
@@ -35,7 +33,11 @@ import { parseSchedule } from "./utils.ts";
 import { DAY_LABELS } from "./constants.ts";
 import { useLectureFetcher } from "./useLectureFetcher.ts";
 import { getFilteredLectures } from "./getFilteredLectures.ts";
-import { MajorFilterSection } from "./MajorFilterSection.tsx";
+import {
+  MajorFilterSection,
+  LectureRow,
+  TimeSlotItem,
+} from "./components/searchDialog";
 
 interface Props {
   searchInfo: {
@@ -127,6 +129,28 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     },
     []
   );
+
+  const toggleTimeSlot = useCallback((id: number) => {
+    setSearchOptions((prev) => {
+      const newTimes = prev.times.includes(id)
+        ? prev.times.filter((t) => t !== id)
+        : [...prev.times, id];
+      return { ...prev, times: newTimes };
+    });
+    setPage(1);
+    loaderWrapperRef.current?.scrollTo(0, 0);
+  }, []);
+
+  const toggleMajor = useCallback((major: string) => {
+    setSearchOptions((prev) => {
+      const newMajors = prev.majors.includes(major)
+        ? prev.majors.filter((m) => m !== major)
+        : [...prev.majors, major];
+      return { ...prev, majors: newMajors };
+    });
+    setPage(1);
+    loaderWrapperRef.current?.scrollTo(0, 0);
+  }, []);
 
   const addSchedule = useCallback(
     (lecture: Lecture) => {
@@ -268,13 +292,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
             <HStack spacing={4}>
               <FormControl>
                 <FormLabel>시간</FormLabel>
-                <CheckboxGroup
-                  colorScheme="green"
-                  value={searchOptions.times}
-                  onChange={(values) =>
-                    changeSearchOption("times", values.map(Number))
-                  }
-                >
+                <CheckboxGroup colorScheme="green" value={searchOptions.times}>
                   <Wrap spacing={1} mb={2}>
                     {searchOptions.times
                       .sort((a, b) => a - b)
@@ -287,12 +305,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                         >
                           <TagLabel>{time}교시</TagLabel>
                           <TagCloseButton
-                            onClick={() =>
-                              changeSearchOption(
-                                "times",
-                                searchOptions.times.filter((v) => v !== time)
-                              )
-                            }
+                            onClick={() => toggleTimeSlot(time)}
                           />
                         </Tag>
                       ))}
@@ -307,11 +320,13 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                     p={2}
                   >
                     {TIME_SLOTS.map(({ id, label }) => (
-                      <Box key={id}>
-                        <Checkbox key={id} size="sm" value={id}>
-                          {id}교시({label})
-                        </Checkbox>
-                      </Box>
+                      <TimeSlotItem
+                        key={id}
+                        id={id}
+                        label={label}
+                        isSelected={searchOptions.times.includes(id)}
+                        onToggle={toggleTimeSlot}
+                      />
                     ))}
                   </Stack>
                 </CheckboxGroup>
@@ -320,9 +335,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
               <MajorFilterSection
                 majors={allMajors}
                 selectedMajors={searchOptions.majors}
-                onChange={(values) =>
-                  changeSearchOption("majors", values as string[])
-                }
+                onToggle={toggleMajor}
               />
             </HStack>
             <Text align="right">검색결과: {filteredLectures.length}개</Text>
@@ -345,29 +358,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 <Table size="sm" variant="striped">
                   <Tbody>
                     {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.major }}
-                        />
-                        <Td
-                          width="150px"
-                          dangerouslySetInnerHTML={{ __html: lecture.schedule }}
-                        />
-                        <Td width="80px">
-                          <Button
-                            size="sm"
-                            colorScheme="green"
-                            onClick={() => addSchedule(lecture)}
-                          >
-                            추가
-                          </Button>
-                        </Td>
-                      </Tr>
+                      <LectureRow
+                        key={`${lecture.id}-${index}`}
+                        lecture={lecture}
+                        index={index}
+                        onAddSchedule={addSchedule}
+                      />
                     ))}
                   </Tbody>
                 </Table>

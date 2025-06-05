@@ -12,11 +12,11 @@ import { MajorCheckboxList } from "./MajorCheckboxList";
 interface MajorFilterSectionProps {
   majors: string[];
   selectedMajors: string[];
-  onChange: (values: string[]) => void;
+  onToggle: (major: string) => void;
 }
 
 export const MajorFilterSection = React.memo(
-  ({ majors, selectedMajors, onChange }: MajorFilterSectionProps) => {
+  ({ majors, selectedMajors, onToggle }: MajorFilterSectionProps) => {
     return (
       <FormControl>
         <FormLabel>전공</FormLabel>
@@ -25,11 +25,7 @@ export const MajorFilterSection = React.memo(
           {selectedMajors.map((major) => (
             <Tag key={major} size="sm" variant="outline" colorScheme="blue">
               <TagLabel>{major.split("<p>").pop()}</TagLabel>
-              <TagCloseButton
-                onClick={() =>
-                  onChange(selectedMajors.filter((v) => v !== major))
-                }
-              />
+              <TagCloseButton onClick={() => onToggle(major)} />
             </Tag>
           ))}
         </Wrap>
@@ -37,7 +33,7 @@ export const MajorFilterSection = React.memo(
         <MajorCheckboxList
           majors={majors}
           selectedMajors={selectedMajors}
-          onChange={onChange}
+          onToggle={onToggle}
         />
       </FormControl>
     );
