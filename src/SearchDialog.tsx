@@ -154,9 +154,13 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     }, []);
   }, [lectures, searchOptions]);
 
+  const allMajors = useMemo(() => 
+    [...new Set(lectures.map(lecture => lecture.major))],
+    [lectures]
+  );
+
   const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
   const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
 
   const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
