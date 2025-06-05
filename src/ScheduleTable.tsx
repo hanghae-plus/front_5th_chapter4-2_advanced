@@ -178,34 +178,59 @@ const DraggableSchedule = ({
 }: DraggableScheduleProps & ComponentProps<typeof Box>) => {
   const { day, range, room, lecture } = data;
   const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
-  const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
-  const topIndex = range[0] - 1;
-  const size = range.length;
   const [enablePopover, setEnablePopover] = useState(false);
 
-  const child = (
-    <Box
-      position="absolute"
-      left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
-      top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
-      width={CellSize.WIDTH - 1 + "px"}
-      height={CellSize.HEIGHT * size - 1 + "px"}
-      p={1}
-      boxSizing="border-box"
-      cursor="pointer"
-      ref={setNodeRef}
-      transform={CSS.Translate.toString(transform)}
-      onMouseEnter={() => setEnablePopover(true)}
-      onMouseLeave={() => setEnablePopover(false)}
-      {...listeners}
-      {...attributes}
-      {...props}
-    >
-      <Text fontSize="sm" fontWeight="bold">
-        {lecture.title}
-      </Text>
-      <Text fontSize="xs">{room}</Text>
-    </Box>
+  const { leftIndex, topIndex, size } = useMemo(
+    () => ({
+      leftIndex: DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]),
+      topIndex: range[0] - 1,
+      size: range.length,
+    }),
+    [day, range]
+  );
+
+  const handleMouseEnter = useCallback(() => setEnablePopover(true), []);
+  const handleMouseLeave = useCallback(() => setEnablePopover(false), []);
+
+  const child = useMemo(
+    () => (
+      <Box
+        position="absolute"
+        left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
+        top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
+        width={CellSize.WIDTH - 1 + "px"}
+        height={CellSize.HEIGHT * size - 1 + "px"}
+        p={1}
+        boxSizing="border-box"
+        cursor="pointer"
+        ref={setNodeRef}
+        transform={CSS.Translate.toString(transform)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        {...listeners}
+        {...attributes}
+        {...props}
+      >
+        <Text fontSize="sm" fontWeight="bold">
+          {lecture.title}
+        </Text>
+        <Text fontSize="xs">{room}</Text>
+      </Box>
+    ),
+    [
+      leftIndex,
+      topIndex,
+      size,
+      transform,
+      setNodeRef,
+      listeners,
+      attributes,
+      props,
+      handleMouseEnter,
+      handleMouseLeave,
+      lecture.title,
+      room,
+    ]
   );
 
   if (enablePopover) {
