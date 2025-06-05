@@ -15,38 +15,82 @@ import {
 import { CellSize, DAY_LABELS, 분 } from "./constants.ts";
 import { Schedule } from "./types.ts";
 import { fill2, parseHnM } from "./utils.ts";
-import { useDndContext, useDraggable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ComponentProps, Fragment, memo, useMemo } from "react";
+import { ComponentProps, Fragment, memo, useMemo, useState } from "react";
+import { useScheduleTableContext } from "./ScheduleTableContextProvider";
 
 interface Props {
   tableId: string;
-  schedules: Schedule[];
+  activeOutline?: boolean;
   onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   onDeleteButtonClick?: (timeInfo: { day: string; time: number }) => void;
 }
 
-const TimeGrid = memo(
+const TIMES = [
+  ...Array(18)
+    .fill(0)
+    .map((v, k) => v + k * 30 * 분)
+    .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
+
+  ...Array(6)
+    .fill(18 * 30 * 분)
+    .map((v, k) => v + k * 55 * 분)
+    .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
+] as const;
+
+const ScheduleTable = memo(
+  ({
+    tableId,
+    activeOutline = false,
+    onScheduleTimeClick,
+    onDeleteButtonClick,
+  }: Props) => {
+    const { schedules } = useScheduleTableContext();
+    const getColor = (lectureId: string): string => {
+      const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
+      const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
+      return colors[lectures.indexOf(lectureId) % colors.length];
+    };
+
+    const deleteButtonHandlers = useMemo(() => {
+      return schedules.map(
+        (schedule) => () =>
+          onDeleteButtonClick?.({
+            day: schedule.day,
+            time: schedule.range[0],
+          })
+      );
+    }, [onDeleteButtonClick, schedules]);
+
+    return (
+      <Box
+        position="relative"
+        outline={activeOutline ? "5px dashed" : undefined}
+        outlineColor="blue.300"
+      >
+        <ScheduleTableGrid onScheduleTimeClick={onScheduleTimeClick} />
+
+        {schedules.map((schedule, index) => (
+          <DraggableSchedule
+            key={`${schedule.lecture.title}-${index}`}
+            id={`${tableId}:${index}`}
+            data={schedule}
+            bg={getColor(schedule.lecture.id)}
+            onDeleteButtonClick={deleteButtonHandlers[index]}
+          />
+        ))}
+      </Box>
+    );
+  }
+);
+
+const ScheduleTableGrid = memo(
   ({
     onScheduleTimeClick,
   }: {
     onScheduleTimeClick?: (timeInfo: { day: string; time: number }) => void;
   }) => {
-    const TIMES = useMemo(
-      () => [
-        ...Array(18)
-          .fill(0)
-          .map((v, k) => v + k * 30 * 분)
-          .map((v) => `${parseHnM(v)}~${parseHnM(v + 30 * 분)}`),
-
-        ...Array(6)
-          .fill(18 * 30 * 분)
-          .map((v, k) => v + k * 55 * 분)
-          .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
-      ],
-      []
-    );
-
     return (
       <Grid
         templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
@@ -107,98 +151,54 @@ const TimeGrid = memo(
   }
 );
 
-const ScheduleTable = memo(
-  ({ tableId, schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-    const getColor = useMemo(() => {
-      const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
-      const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
-      return (lectureId: string): string =>
-        colors[lectures.indexOf(lectureId) % colors.length];
-    }, [schedules]);
+type DraggableScheduleProps = {
+  id: string;
+  data: Schedule;
+  onDeleteButtonClick: () => void;
+};
 
-    const dndContext = useDndContext();
+const DraggableSchedule = ({
+  id,
+  data,
+  onDeleteButtonClick,
+  ...props
+}: DraggableScheduleProps & ComponentProps<typeof Box>) => {
+  const { day, range, room, lecture } = data;
+  const { attributes, setNodeRef, listeners, transform } = useDraggable({ id });
+  const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
+  const topIndex = range[0] - 1;
+  const size = range.length;
+  const [enablePopover, setEnablePopover] = useState(false);
 
-    const getActiveTableId = () => {
-      const activeId = dndContext.active?.id;
-      if (activeId) {
-        return String(activeId).split(":")[0];
-      }
-      return null;
-    };
+  const child = (
+    <Box
+      position="absolute"
+      left={`${120 + CellSize.WIDTH * leftIndex + 1}px`}
+      top={`${40 + (topIndex * CellSize.HEIGHT + 1)}px`}
+      width={CellSize.WIDTH - 1 + "px"}
+      height={CellSize.HEIGHT * size - 1 + "px"}
+      p={1}
+      boxSizing="border-box"
+      cursor="pointer"
+      ref={setNodeRef}
+      transform={CSS.Translate.toString(transform)}
+      onMouseEnter={() => setEnablePopover(true)}
+      onMouseLeave={() => setEnablePopover(false)}
+      {...listeners}
+      {...attributes}
+      {...props}
+    >
+      <Text fontSize="sm" fontWeight="bold">
+        {lecture.title}
+      </Text>
+      <Text fontSize="xs">{room}</Text>
+    </Box>
+  );
 
-    const activeTableId = getActiveTableId();
-
-    return (
-      <Box
-        position="relative"
-        outline={activeTableId === tableId ? "5px dashed" : undefined}
-        outlineColor="blue.300"
-      >
-        <TimeGrid onScheduleTimeClick={onScheduleTimeClick} />
-
-        {schedules.map((schedule, index) => (
-          <DraggableSchedule
-            key={`${schedule.lecture.title}-${index}`}
-            id={`${tableId}:${index}`}
-            data={schedule}
-            bg={getColor(schedule.lecture.id)}
-            onDeleteButtonClick={() =>
-              onDeleteButtonClick?.({
-                day: schedule.day,
-                time: schedule.range[0],
-              })
-            }
-          />
-        ))}
-      </Box>
-    );
-  }
-);
-
-const DraggableSchedule = memo(
-  ({
-    id,
-    data,
-    bg,
-    onDeleteButtonClick,
-  }: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
-      onDeleteButtonClick: () => void;
-    }) => {
-    const { day, range, room, lecture } = data;
-    const { attributes, setNodeRef, listeners, transform } = useDraggable({
-      id,
-      data: {
-        type: "schedule",
-        schedule: data,
-      },
-    });
-    const leftIndex = DAY_LABELS.indexOf(day as (typeof DAY_LABELS)[number]);
-    const topIndex = range[0] - 1;
-    const size = range.length;
-
-    const style = {
-      position: "absolute" as const,
-      left: `${120 + CellSize.WIDTH * leftIndex + 1}px`,
-      top: `${40 + (topIndex * CellSize.HEIGHT + 1)}px`,
-      width: `${CellSize.WIDTH - 1}px`,
-      height: `${CellSize.HEIGHT * size - 1}px`,
-      backgroundColor: bg,
-      padding: "4px",
-      boxSizing: "border-box" as const,
-      cursor: "pointer",
-      transform: CSS.Translate.toString(transform),
-    };
-
+  if (enablePopover) {
     return (
       <Popover>
-        <PopoverTrigger>
-          <Box ref={setNodeRef} {...style} {...listeners} {...attributes}>
-            <Text fontSize="sm" fontWeight="bold">
-              {lecture.title}
-            </Text>
-            <Text fontSize="xs">{room}</Text>
-          </Box>
-        </PopoverTrigger>
+        <PopoverTrigger>{child}</PopoverTrigger>
         <PopoverContent onClick={(event) => event.stopPropagation()}>
           <PopoverArrow />
           <PopoverCloseButton />
@@ -212,6 +212,8 @@ const DraggableSchedule = memo(
       </Popover>
     );
   }
-);
+
+  return child;
+};
 
 export default ScheduleTable;

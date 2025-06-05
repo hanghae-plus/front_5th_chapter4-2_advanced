@@ -4,14 +4,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
-import { PropsWithChildren, useCallback } from "react";
+import { PropsWithChildren } from "react";
 import { CellSize, DAY_LABELS } from "./constants.ts";
-import {
-  useSchedulesMap,
-  useSchedulesMapDispatch,
-} from "./ScheduleContext.tsx";
+import { useScheduleContext } from "./ScheduleContext.tsx";
 
 function createSnapModifier(): Modifier {
   return ({ transform, containerNodeRect, draggingNodeRect }) => {
@@ -50,9 +46,7 @@ function createSnapModifier(): Modifier {
 const modifiers = [createSnapModifier()];
 
 export default function ScheduleDndProvider({ children }: PropsWithChildren) {
-  const { schedulesMap } = useSchedulesMap();
-  const { setSchedulesMap } = useSchedulesMapDispatch();
-
+  const { schedulesMap, setSchedulesMap } = useScheduleContext();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -61,36 +55,28 @@ export default function ScheduleDndProvider({ children }: PropsWithChildren) {
     })
   );
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, delta } = event;
-      const { x, y } = delta;
-      const [tableId, indexStr] = String(active.id).split(":");
-      const index = Number(indexStr);
-      const schedule = schedulesMap[tableId][index];
-      const nowDayIndex = DAY_LABELS.indexOf(
-        schedule.day as (typeof DAY_LABELS)[number]
-      );
-      const moveDayIndex = Math.floor(x / CellSize.WIDTH);
-      const moveTimeIndex = Math.floor(y / CellSize.HEIGHT);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDragEnd = (event: any) => {
+    const { active, delta } = event;
+    const { x, y } = delta;
+    const [tableId, index] = active.id.split(":");
+    const schedule = schedulesMap[tableId][index];
+    const nowDayIndex = DAY_LABELS.indexOf(
+      schedule.day as (typeof DAY_LABELS)[number]
+    );
+    const moveDayIndex = Math.floor(x / 80);
+    const moveTimeIndex = Math.floor(y / 30);
 
-      setSchedulesMap((prev) => {
-        const newMap = { ...prev };
-        newMap[tableId] = prev[tableId].map((targetSchedule, targetIndex) => {
-          if (targetIndex !== index) {
-            return targetSchedule;
-          }
-          return {
-            ...targetSchedule,
-            day: DAY_LABELS[nowDayIndex + moveDayIndex],
-            range: targetSchedule.range.map((time) => time + moveTimeIndex),
-          };
-        });
-        return newMap;
-      });
-    },
-    [schedulesMap, setSchedulesMap]
-  );
+    setSchedulesMap((prev) => {
+      prev[tableId][index] = {
+        ...prev[tableId][index],
+        day: DAY_LABELS[nowDayIndex + moveDayIndex],
+        range: prev[tableId][index].range.map((time) => time + moveTimeIndex),
+      };
+
+      return prev;
+    });
+  };
 
   return (
     <DndContext
