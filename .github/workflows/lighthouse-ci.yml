@@ -1,0 +1,99 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to run Lighthouse on'
+        required: false
+        default: 'http://localhost:8080'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  lighthouse-audit:
+    name: Lighthouse Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Install dependencies
+        run: |
+          npm install -g @lhci/cli@0.14.x http-server
+          
+      - name: Start local server
+        run: |
+          http-server . -p 8080 &
+          sleep 10
+        
+      - name: Run Lighthouse CI
+        id: lighthouse
+        continue-on-error: true
+        run: |
+          URL="${{ github.event.inputs.url || 'http://localhost:8080' }}"
+          lhci autorun \
+            --collect.url=$URL \
+            --upload.target=filesystem \
+            --outputDir=.lighthouseci 
+
+          
+      - name: Create GitHub Issue with Results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs   = require('fs');
+            const path = require('path');
+
+            const dir          = path.join(process.env.GITHUB_WORKSPACE, '.lighthouseci');
+            const jsonReports  = fs.readdirSync(dir).filter(f => f.endsWith('.report.json'));
+            if (!jsonReports.length) {
+              core.setFailed(`No *.report.json found in ${dir}`);
+              return;
+            }
+            const latestReport = jsonReports.sort().reverse()[0];     // 파일명에 타임스탬프 포함
+            const reportPath   = path.join(dir, latestReport);
+            const report       = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+            const pct   = v => Math.round((v ?? 0) * 100);
+            const badge = v => (v >= 90 ? '🟢' : v >= 50 ? '🟠' : '🔴');
+            const cat   = c => report.categories?.[c]?.score ?? 0;
+            const met   = m => report.audits?.[m]?.numericValue ?? null;
+
+            const categories = ['performance','accessibility','best-practices','seo','pwa'];
+            let body = '## ⚡️ Latest Lighthouse Report\n\n';
+            body += '| Category | Score |\n| --- | --- |\n';
+            categories.forEach(c =>
+              body += `| ${badge(pct(cat(c)))} ${c} | ${pct(cat(c))} |\n`
+            );
+
+            const vitals = {
+              LCP: met('largest-contentful-paint'),
+              INP: met('interactive'),
+              CLS: met('cumulative-layout-shift')
+            };
+            body += '\n### Web-Vitals\n\n| Metric | Value |\n| --- | --- |\n';
+            Object.entries(vitals).forEach(([k,v]) =>
+              body += `| ${k} | ${v !== null ? v.toFixed(k === 'CLS' ? 3 : 2) + (k==='CLS'?'':' ms') : 'N/A'} |\n`
+            );
+
+            body += `\n> 📅 측정 시간: ${new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`;
+
+            await github.rest.issues.create({
+              owner : context.repo.owner,
+              repo  : context.repo.repo,
+              title : `📊 Lighthouse 결과 – ${new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false})}`,
+              body,
+              labels: ['lighthouse-audit','web-vitals']
+            });

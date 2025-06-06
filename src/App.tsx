@@ -8,9 +8,7 @@ function App() {
   return (
     <ChakraProvider>
       <ScheduleProvider>
-        <ScheduleDndProvider>
           <ScheduleTables/>
-        </ScheduleDndProvider>
       </ScheduleProvider>
     </ChakraProvider>
   );
