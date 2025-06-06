@@ -107,11 +107,11 @@ const fetchAllLectures = async () => {
 
 ### 불필요한 리렌더링 최적화
 
-| 포인트                                                                                                            | 조치                                                                                                                 | 왜 도움이 되나 |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------- |
-| **컴포넌트 자체를 `memo()`로 래핑**<br>`ts<br>const SearchDialog = memo(({ searchInfo, onClose }: Props) => { … });<br>` | 부모가 재렌더돼도 `searchInfo`·`onClose` 참조값이 바뀌지 않으면 SearchDialog 전체가 건너뜀                                                 |          |
-| **폼·테이블을 분리해 `memo` 적용**<br>`<SearchInput/> <CreditsSelect/> … <LectureTable/>`                                | 거대한 JSX 트리를 잘게 쪼개면 **국지적 상태 변화**(예: 검색어 타이핑)가 나머지 UI에 전파되지 않음.                                                     |          |
-| **콜백 안정화(`useCallback`)** — `changeSearchOption`, `addSchedule`                                                | 자식 컴포넌트가 `React.memo`라도 **새 함수 참조**가 내려오면 다시 그림.<br>의존성 배열을 `field`·`value` 최소한으로 유지.                              |          |
-| **프리미티브 값을 props로 전달**                                                                                         | `searchOptions.times.sort(...)` 결과처럼 **정렬된 새 배열**을 그대로 넘기면 매 렌더마다 새 참조가 생성됨. → `useMemo`로 정렬 캐싱 후 넘겨 불필요한 diff 방지. |          |
-| **컨트롤러 요소(CheckboxGroup 등)** 자체 내부에서도 `isChecked`-별 `memo` 사용                                                  | Chakra UI 같은 UI Kit은 prop 변화에 예민 → 체크 박스 100개가 동시에 깜빡이는 현상 제거                                                      |          |
+| 포인트                                                                                                            | 조치                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **컴포넌트 자체를 `memo()`로 래핑**<br>`ts<br>const SearchDialog = memo(({ searchInfo, onClose }: Props) => { … });<br>` | 부모가 재렌더돼도 `searchInfo`·`onClose` 참조값이 바뀌지 않으면 SearchDialog 전체가 건너뜀                                                 |
+| **폼·테이블을 분리해 `memo` 적용**<br>`<SearchInput/> <CreditsSelect/> … <LectureTable/>`                                | 거대한 JSX 트리를 잘게 쪼개면 **국지적 상태 변화**(예: 검색어 타이핑)가 나머지 UI에 전파되지 않음.                                                     |
+| **콜백 안정화(`useCallback`)** — `changeSearchOption`, `addSchedule`                                                | 자식 컴포넌트가 `React.memo`라도 **새 함수 참조**가 내려오면 다시 그림.<br>의존성 배열을 `field`·`value` 최소한으로 유지.                              |
+| **프리미티브 값을 props로 전달**                                                                                         | `searchOptions.times.sort(...)` 결과처럼 **정렬된 새 배열**을 그대로 넘기면 매 렌더마다 새 참조가 생성됨. → `useMemo`로 정렬 캐싱 후 넘겨 불필요한 diff 방지. |
+| **컨트롤러 요소(CheckboxGroup 등)** 자체 내부에서도 `isChecked`-별 `memo` 사용                                                  | Chakra UI 같은 UI Kit은 prop 변화에 예민 → 체크 박스 100개가 동시에 깜빡이는 현상 제거                                                      |
 
