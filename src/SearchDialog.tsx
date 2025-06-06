@@ -59,17 +59,17 @@ interface ApiResponse<T> {
   status: number;
 }
 
-const cachedApi = new Map<string, ApiResponse<Lecture[]>>();
+const cachedApi = useRef(new Map<string, ApiResponse<Lecture[]>>());
 
 const cachedFetch = (fetchFn: () => Promise<ApiResponse<Lecture[]>>): Promise<ApiResponse<Lecture[]>> => {
   const key = fetchFn.name;
-  if (cachedApi.has(key)) {
-    const cached = cachedApi.get(key);
+  if (cachedApi.current.has(key)) {
+    const cached = cachedApi.current.get(key);
     if (cached) return Promise.resolve(cached);
   }
 
   const promise = fetchFn().then(res => {
-    cachedApi.set(key, res);
+    cachedApi.current.set(key, res);
     return res;
   });
 
@@ -293,7 +293,7 @@ const SearchDialog = memo(({ searchInfo, onClose }: Props) => {
       });
   }
 
-  const filteredLectures = getFilteredLectures();
+  const filteredLectures = useMemo(() => getFilteredLectures(), [lectures, searchOptions])
   const lastPage = useMemo(() => Math.ceil(filteredLectures.length / PAGE_SIZE), [filteredLectures.length]);
   const visibleLectures = useMemo(() => filteredLectures.slice(0, page * PAGE_SIZE), [filteredLectures, page]);
   const allMajors = useMemo(() => [...new Set(lectures.map(lecture => lecture.major))], [lectures]);
